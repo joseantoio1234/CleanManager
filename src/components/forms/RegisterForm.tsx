@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authRepository } from '../../database/repositories/auth.repository';
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { authRepository } from '../../database/repositories/auth.repository';
 import { 
   validateCIF, 
   validateTelefono, 
@@ -31,43 +31,27 @@ const Register = () => {
   // Estado para los mensajes de error
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Manejador de cambios genérico
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Si ya había un error en este campo, lo limpiamos mientras el usuario escribe
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  // Función de validación individual al perder el foco
   const validateField = (name: string, value: string) => {
     let error = '';
-
     if (!value || value.trim() === '') {
       error = 'Este campo es obligatorio';
     } else {
       switch (name) {
-        case 'cif':
-          if (!validateCIF(value)) error = 'El CIF/NIF debe tener 9 caracteres';
-          break;
-        case 'telefono':
-          if (!validateTelefono(value)) error = 'Debe tener 9 dígitos numéricos';
-          break;
-        case 'codigoPostal':
-          if (!validateCP(value)) error = 'Debe tener 5 dígitos numéricos';
-          break;
-        case 'email':
-          if (!validateEmail(value)) error = 'Introduce un email válido';
-          break;
-        case 'password':
-          if (!validatePassword(value)) error = 'Contraseña insegura (Mín. 6 carac, Mayús, Núm y Esp.)';
-          break;
+        case 'cif': if (!validateCIF(value)) error = 'El CIF/NIF debe tener 9 caracteres'; break;
+        case 'telefono': if (!validateTelefono(value)) error = 'Debe tener 9 dígitos numéricos'; break;
+        case 'codigoPostal': if (!validateCP(value)) error = 'Debe tener 5 dígitos numéricos'; break;
+        case 'email': if (!validateEmail(value)) error = 'Introduce un email válido'; break;
+        case 'password': if (!validatePassword(value)) error = 'Contraseña insegura'; break;
       }
     }
-
     setErrors(prev => ({ ...prev, [name]: error }));
     return error === '';
   };
@@ -75,28 +59,20 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validar todos los campos antes de enviar para evitar campos vacíos
     let isValid = true;
     const currentErrors: Record<string, string> = {};
 
     Object.entries(formData).forEach(([name, value]) => {
-      if (!value || value.trim() === '') {
-        currentErrors[name] = 'Este campo es obligatorio';
+      if (!validateField(name, value)) {
+        currentErrors[name] = errors[name] || 'Campo inválido o vacío';
         isValid = false;
-      } else {
-        // Ejecutar validaciones de regex
-        switch (name) {
-          case 'cif': if (!validateCIF(value)) { currentErrors[name] = 'El CIF/NIF debe tener 9 caracteres'; isValid = false; } break;
-          case 'telefono': if (!validateTelefono(value)) { currentErrors[name] = 'Debe tener 9 dígitos numéricos'; isValid = false; } break;
-          case 'codigoPostal': if (!validateCP(value)) { currentErrors[name] = 'Debe tener 5 dígitos numéricos'; isValid = false; } break;
-          case 'email': if (!validateEmail(value)) { currentErrors[name] = 'Introduce un email válido'; isValid = false; } break;
-          case 'password': if (!validatePassword(value)) { currentErrors[name] = 'Contraseña insegura'; isValid = false; } break;
-        }
       }
     });
 
-    setErrors(currentErrors);
-    if (!isValid) return;
+    if (!isValid) {
+      setErrors(currentErrors);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -111,15 +87,21 @@ const Register = () => {
         email_acceso: formData.email
       };
       
+      // Intentamos el registro real
       await authRepository.signUp(formData.email, formData.password, companyData);
-      alert("¡Registro completado! Revisa tu email.");
+      
+      alert("¡Empresa registrada con éxito en la base de datos! Ahora puedes iniciar sesión.");
       navigate('/login'); 
 
     } catch (error: any) {
+      console.error("Error real en registro:", error);
+      
+      // Si el error es de RED (WiFi bloqueado), avisamos seriamente
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
-        navigate('/dashboard'); 
+        alert("ERROR DE CONEXIÓN: El WiFi actual bloquea la base de datos. Los datos NO se han guardado. Por favor, usa los datos de tu móvil.");
       } else {
-        alert("Error: " + (error.message || "Error desconocido"));
+        // Si el error es de Supabase (ej: el email ya existe)
+        alert("Error de registro: " + (error.message || "No se pudo guardar la empresa"));
       }
     } finally {
       setLoading(false);
@@ -141,7 +123,6 @@ const Register = () => {
 
         <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-6 gap-x-4 gap-y-3 text-left">
           
-          {/* Nombre */}
           <div className="md:col-span-6 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre de la Empresa *</label>
             <Input 
@@ -154,7 +135,6 @@ const Register = () => {
             <ErrorMsg name="nombre" />
           </div>
 
-          {/* CIF */}
           <div className="md:col-span-3 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CIF / NIF *</label>
             <Input 
@@ -167,7 +147,6 @@ const Register = () => {
             <ErrorMsg name="cif" />
           </div>
 
-          {/* Teléfono */}
           <div className="md:col-span-3 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Teléfono *</label>
             <Input 
@@ -180,7 +159,6 @@ const Register = () => {
             <ErrorMsg name="telefono" />
           </div>
 
-          {/* Dirección */}
           <div className="md:col-span-4 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Dirección Física *</label>
             <Input 
@@ -193,7 +171,6 @@ const Register = () => {
             <ErrorMsg name="direccion" />
           </div>
 
-          {/* Código Postal */}
           <div className="md:col-span-2 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CP *</label>
             <Input 
@@ -206,7 +183,6 @@ const Register = () => {
             <ErrorMsg name="codigoPostal" />
           </div>
 
-          {/* Municipio */}
           <div className="md:col-span-3 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Municipio *</label>
             <Input 
@@ -219,7 +195,6 @@ const Register = () => {
             <ErrorMsg name="municipio" />
           </div>
 
-          {/* Provincia */}
           <div className="md:col-span-3 space-y-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Provincia *</label>
             <Input 
@@ -232,7 +207,6 @@ const Register = () => {
             <ErrorMsg name="provincia" />
           </div>
 
-          {/* Email y Password */}
           <div className="md:col-span-6 border-t border-slate-100 pt-5 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-blue-400 uppercase ml-1">Email de Acceso *</label>
@@ -266,7 +240,7 @@ const Register = () => {
             disabled={loading} 
             className="md:col-span-6 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-2xl mt-4 shadow-lg shadow-blue-200 transition-all active:scale-95"
           >
-            {loading ? "Registrando..." : "Finalizar Registro"}
+            {loading ? "Creando empresa..." : "Finalizar Registro"}
           </Button>
 
           <div className="md:col-span-6 text-center pt-2">

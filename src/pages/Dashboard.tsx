@@ -1,26 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     FiBox,
-    FiUsers,
     FiClock,
     FiCheckCircle,
     FiTrendingUp
-} from 'react-icons/fi'; // Necesitarás instalar react-icons
+} from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
-const Dashboard = () => {
-    // Datos de ejemplo para la interfaz
-    const stats = [
-        { label: 'Pedidos Hoy', value: '12', icon: <FiBox />, color: 'bg-blue-500' },
-        { label: 'En Proceso', value: '8', icon: <FiClock />, color: 'bg-amber-500' },
-        { label: 'Listos para Entrega', value: '5', icon: <FiCheckCircle />, color: 'bg-emerald-500' },
-        { label: 'Ingresos Mes', value: '1.240€', icon: <FiTrendingUp />, color: 'bg-indigo-500' },
-    ];
+// Interfaz para definir la estructura de un pedido real
+interface Pedido {
+    id_pedido: number;
+    cliente: string;
+    servicio: string;
+    estado: 'EN_LAVADO' | 'LISTO' | 'ENTREGADO';
+    total: number;
+}
 
-    const recentOrders = [
-        { id: '#1024', cliente: 'Juan Pérez', servicio: 'Edredón nórdico', estado: 'En Lavado', total: '15.50€' },
-        { id: '#1023', cliente: 'María López', servicio: 'Traje 2 piezas', estado: 'Listo', total: '12.00€' },
-        { id: '#1022', cliente: 'Carlos Ruiz', servicio: 'Camisas (x5)', estado: 'Pendiente', total: '10.00€' },
+const Dashboard = () => {
+    // 1. Estados dinámicos para las estadísticas y los pedidos
+    const [statsData, setStatsData] = useState({
+        pedidosHoy: 0,
+        enProceso: 0,
+        listosEntrega: 0,
+        ingresosMes: 0
+    });
+    const [recentOrders, setRecentOrders] = useState<Pedido[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // 2. Efecto para llamar al Backend de Node.js (próximamente)
+    useEffect(() => {
+        // De momento dejamos simulado un retraso de carga para probar la interfaz limpia
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Estructura de las tarjetas vinculada a los estados reactivos
+    const statsConfig = [
+        { label: 'Pedidos Hoy', value: `${statsData.pedidosHoy}`, icon: <FiBox />, color: 'bg-blue-500' },
+        { label: 'En Proceso', value: `${statsData.enProceso}`, icon: <FiClock />, color: 'bg-amber-500' },
+        { label: 'Listos para Entrega', value: `${statsData.listosEntrega}`, icon: <FiCheckCircle />, color: 'bg-emerald-500' },
+        { label: 'Ingresos Mes', value: `${statsData.ingresosMes.toFixed(2)}€`, icon: <FiTrendingUp />, color: 'bg-indigo-500' },
     ];
 
     return (
@@ -38,16 +59,20 @@ const Dashboard = () => {
                 </Link>
             </div>
 
-            {/* Grid de Estadísticas */}
+            {/* Grid de Estadísticas Dinámicas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
+                {statsConfig.map((stat, index) => (
                     <div key={index} className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4">
                         <div className={`${stat.color} p-4 rounded-2xl text-white text-2xl`}>
                             {stat.icon}
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                            <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+                            {loading ? (
+                                <div className="h-7 w-12 bg-slate-100 rounded animate-pulse mt-1" />
+                            ) : (
+                                <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -74,21 +99,39 @@ const Dashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {recentOrders.map((order, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-8 py-5 text-sm font-bold text-blue-600">{order.id}</td>
-                                    <td className="px-8 py-5 text-sm font-medium text-slate-700">{order.cliente}</td>
-                                    <td className="px-8 py-5 text-sm text-slate-500">{order.servicio}</td>
-                                    <td className="px-8 py-5">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${order.estado === 'Listo' ? 'bg-emerald-100 text-emerald-700' :
-                                                order.estado === 'En Lavado' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                                            }`}>
-                                            {order.estado}
-                                        </span>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                            Cargando flujos de datos locales...
+                                        </div>
                                     </td>
-                                    <td className="px-8 py-5 text-sm font-bold text-slate-900">{order.total}</td>
                                 </tr>
-                            ))}
+                            ) : recentOrders.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
+                                        No hay pedidos registrados en este momento. Haz clic en "+ Nuevo Pedido".
+                                    </td>
+                                </tr>
+                            ) : (
+                                recentOrders.map((order, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-8 py-5 text-sm font-bold text-blue-600">#{order.id_pedido}</td>
+                                        <td className="px-8 py-5 text-sm font-medium text-slate-700">{order.cliente}</td>
+                                        <td className="px-8 py-5 text-sm text-slate-500">{order.servicio}</td>
+                                        <td className="px-8 py-5">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                order.estado === 'LISTO' ? 'bg-emerald-100 text-emerald-700' :
+                                                order.estado === 'EN_LAVADO' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                                            }`}>
+                                                {order.estado.replace('_', ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">{order.total.toFixed(2)}€</td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
