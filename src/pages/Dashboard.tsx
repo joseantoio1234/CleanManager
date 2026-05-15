@@ -7,9 +7,10 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
-// Interfaz para definir la estructura de un pedido real
+// Interfaz actualizada para reflejar la columna 'prenda' añadida en MySQL
 interface Pedido {
     id_pedido: number;
+    prenda: string;
     cliente: string;
     servicio: string;
     estado: 'EN_LAVADO' | 'LISTO' | 'ENTREGADO';
@@ -17,7 +18,7 @@ interface Pedido {
 }
 
 const Dashboard = () => {
-    // 1. Estados dinámicos para las estadísticas y los pedidos
+    // Estados dinámicos para las estadísticas y los pedidos de la DB
     const [statsData, setStatsData] = useState({
         pedidosHoy: 0,
         enProceso: 0,
@@ -27,16 +28,43 @@ const Dashboard = () => {
     const [recentOrders, setRecentOrders] = useState<Pedido[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // 2. Efecto para llamar al Backend de Node.js (próximamente)
-    useEffect(() => {
-        // De momento dejamos simulado un retraso de carga para probar la interfaz limpia
-        const timer = setTimeout(() => {
+    // ID de la empresa temporal (el mismo que usamos en el formulario de Nuevo Pedido)
+    const ID_EMPRESA = 1;
+
+    // Función para consultar de forma asíncrona tu Backend local
+    const cargarDatosDashboard = async () => {
+        try {
+            setLoading(true);
+            
+            // Petición paralela a ambos endpoints locales usando el ID de empresa activo
+            const [resStats, resRecent] = await Promise.all([
+                fetch(`http://localhost:5000/api/dashboard/stats/${ID_EMPRESA}`),
+                fetch(`http://localhost:5000/api/dashboard/recent/${ID_EMPRESA}`)
+            ]);
+
+            if (!resStats.ok || !resRecent.ok) {
+                throw new Error("Error en la respuesta del servidor local");
+            }
+
+            const dataStats = await resStats.json();
+            const dataRecent = await resRecent.json();
+
+            // Seteamos las variables de estado con información de MySQL
+            setStatsData(dataStats);
+            setRecentOrders(dataRecent);
+        } catch (error) {
+            console.error("Error cargando flujos de datos en el dashboard:", error);
+        } finally {
             setLoading(false);
-        }, 1000);
-        return () => clearTimeout(timer);
+        }
+    };
+
+    // Al montar el componente, disparamos la lectura a MySQL Workbench
+    useEffect(() => {
+        cargarDatosDashboard();
     }, []);
 
-    // Estructura de las tarjetas vinculada a los estados reactivos
+    // Estructura adaptativa de las tarjetas
     const statsConfig = [
         { label: 'Pedidos Hoy', value: `${statsData.pedidosHoy}`, icon: <FiBox />, color: 'bg-blue-500' },
         { label: 'En Proceso', value: `${statsData.enProceso}`, icon: <FiClock />, color: 'bg-amber-500' },
@@ -84,7 +112,9 @@ const Dashboard = () => {
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <FiBox className="text-blue-500" /> Últimos Pedidos
                     </h2>
-                    <button className="text-blue-600 font-bold text-sm hover:underline">Ver todos</button>
+                    <button onClick={cargarDatosDashboard} className="text-blue-600 font-bold text-sm hover:underline">
+                        Refrescar
+                    </button>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -93,6 +123,7 @@ const Dashboard = () => {
                             <tr>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">ID</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Cliente</th>
+                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Prenda</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Servicio</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Estado</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Total</th>
@@ -101,7 +132,7 @@ const Dashboard = () => {
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
+                                    <td colSpan={6} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
                                         <div className="flex items-center justify-center gap-2">
                                             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                                             Cargando flujos de datos locales...
@@ -110,7 +141,7 @@ const Dashboard = () => {
                                 </tr>
                             ) : recentOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
+                                    <td colSpan={6} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
                                         No hay pedidos registrados en este momento. Haz clic en "+ Nuevo Pedido".
                                     </td>
                                 </tr>
@@ -119,6 +150,7 @@ const Dashboard = () => {
                                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-8 py-5 text-sm font-bold text-blue-600">#{order.id_pedido}</td>
                                         <td className="px-8 py-5 text-sm font-medium text-slate-700">{order.cliente}</td>
+                                        <td className="px-8 py-5 text-sm font-medium text-slate-600">{order.prenda}</td>
                                         <td className="px-8 py-5 text-sm text-slate-500">{order.servicio}</td>
                                         <td className="px-8 py-5">
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${

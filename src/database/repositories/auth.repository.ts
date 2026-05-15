@@ -3,6 +3,16 @@
 // Esta es la URL de tu servidor Node.js local con MySQL
 const API_URL = 'http://localhost:5000/api';
 
+// Interfaz para el tipado del nuevo pedido
+interface OrderData {
+  prenda: string;
+  id_empresa: number;
+  cliente: string;
+  servicio: string;
+  estado: 'EN_LAVADO' | 'LISTO' | 'ENTREGADO';
+  total: number;
+}
+
 export const authRepository = {
   // Registro de nueva empresa enviando los datos a nuestro Backend local
   signUp: async (email: string, password: string, companyData: any) => {
@@ -33,7 +43,7 @@ export const authRepository = {
 
       return data;
     } catch (error: any) {
-      console.error("Error en authRepository:", error);
+      console.error("Error en authRepository (signUp):", error);
       throw error;
     }
   },
@@ -53,6 +63,32 @@ export const authRepository = {
       return { success: true };
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
+      throw error;
+    }
+  },
+
+  // ==========================================
+  // NUEVO: CREAR PEDIDO EN LA BASE DE DATOS
+  // ==========================================
+  createOrder: async (orderData: OrderData) => {
+    try {
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al crear el nuevo pedido');
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error("Error en authRepository (createOrder):", error);
       throw error;
     }
   }
