@@ -112,7 +112,7 @@ const NuevoPedido = () => {
               <FiTag className="text-blue-500" /> Detalles de la Prenda
             </h2>
             <div className="space-y-4">
-              {/* Desplegable de Tipo de Ropa/Prenda */}
+              {/* Desplegable de Tipo de Ropa/Prenda Actualizado */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tipo de Prenda</label>
                 <select 
@@ -123,15 +123,25 @@ const NuevoPedido = () => {
                   className="w-full h-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 >
                   <option value="">Selecciona la prenda...</option>
-                  <option value="Traje (2/3 piezas)">Traje (2/3 piezas)</option>
-                  <option value="Camisa / Blusa">Camisa / Blusa</option>
-                  <option value="Pantalón / Vaquero">Pantalón / Vaquero</option>
-                  <option value="Edredón / Manta / Nórdico">Edredón / Manta / Nórdico</option>
-                  <option value="Abrigo / Gabardina / Chaqueta">Abrigo / Gabardina / Chaqueta</option>
-                  <option value="Vestido (Corto / Fiesta)">Vestido (Corto / Fiesta)</option>
+                  <option value="Abrigo Corto">Abrigo Corto</option>
+                  <option value="Abrigo Largo">Abrigo Largo</option>
+                  <option value="Camisa">Camisa</option>
+                  <option value="Camiseta">Camiseta</option>
+                  <option value="Chaqueta">Chaqueta</option>
+                  <option value="Chaquetón">Chaquetón</option>
+                  <option value="Corbata">Corbata</option>
+                  <option value="Falda">Falda</option>
+                  <option value="Jersey Punto">Jersey Punto</option>
+                  <option value="Pantalón">Pantalón</option>
+                  <option value="Plumífero">Plumífero</option>
+                  <option value="Traje caballero">Traje caballero</option>
+                  <option value="Traje comunión">Traje comunión</option>
+                  <option value="Vestido Niña">Vestido Niña</option>
+                  <option value="Vestido Novia">Vestido Novia</option>
                 </select>
               </div>
 
+              {/* Desplegable de Tipo de Servicio Actualizado */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tipo de Servicio</label>
                 <select 
@@ -142,11 +152,12 @@ const NuevoPedido = () => {
                   className="w-full h-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 >
                   <option value="">Selecciona el tratamiento...</option>
+                  <option value="Limpieza">Limpieza</option>
+                  <option value="Limpieza alfombras">Limpieza alfombras</option>
+                  <option value="Limpieza cortinas">Limpieza cortinas</option>
                   <option value="Limpieza en seco">Limpieza en seco</option>
-                  <option value="Lavado y Planchado">Lavado y Planchado</option>
-                  <option value="Solo Planchado">Solo Planchado</option>
-                  <option value="Tratamiento Quitamanchas Especial">Tratamiento Quitamanchas Especial</option>
-                  <option value="Arreglo / Costura">Arreglo / Costura</option>
+                  <option value="Plancha">Plancha</option>
+                  <option value="Secado">Secado</option>
                 </select>
               </div>
 
@@ -156,7 +167,7 @@ const NuevoPedido = () => {
                   name="total"
                   value={formData.total}
                   onChange={handleChange}
-                  type="text" // Cambiado a text para permitir que el usuario escriba la coma sin bloqueos del navegador
+                  type="text" 
                   placeholder="0.00" 
                   required 
                   className="rounded-xl border-slate-100 bg-slate-50/50" 

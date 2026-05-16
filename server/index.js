@@ -1,4 +1,3 @@
-// server/index.js
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -83,17 +82,19 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ==========================================
-// RUTA: ESTADÍSTICAS DEL PANEL (MÉTRICAS)
+// RUTA: ESTADÍSTICAS DEL PANEL (MÉTRICAS) - ACTUALIZADA
 // ==========================================
 app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
-  // Consulta para obtener los contadores filtrando por la fecha actual y estados
+  // Consulta adaptada a la nueva lista de estados:
+  // - En proceso: lavado o secado.
+  // - Listos para entrega: acabado.
   const sql = `
     SELECT 
       COUNT(CASE WHEN DATE(fecha_pedido) = CURDATE() THEN 1 END) as pedidosHoy,
-      COUNT(CASE WHEN estado = 'EN_LAVADO' THEN 1 END) as enProceso,
-      COUNT(CASE WHEN estado = 'LISTO' THEN 1 END) as listosEntrega,
+      COUNT(CASE WHEN estado IN ('EN_LAVADO', 'EN_SECADO') THEN 1 END) as enProceso,
+      COUNT(CASE WHEN estado = 'ACABADO' THEN 1 END) as listosEntrega,
       COALESCE(SUM(CASE WHEN MONTH(fecha_pedido) = MONTH(CURDATE()) AND YEAR(fecha_pedido) = YEAR(CURDATE()) THEN total ELSE 0 END), 0) as ingresosMes
     FROM pedido 
     WHERE id_empresa = ?
@@ -115,12 +116,11 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ÚLTIMOS PEDIDOS DEL PANEL (TABLA) - ACTUALIZADA
+// RUTA: ÚLTIMOS PEDIDOS DEL PANEL (TABLA)
 // ==========================================
 app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
-  // Añadida la columna 'prenda' para que se envíe correctamente al frontend
   const sql = `
     SELECT id_pedido, prenda, cliente, servicio, estado, total 
     FROM pedido 
@@ -142,7 +142,6 @@ app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
 // RUTA: CREAR NUEVO PEDIDO - ACTUALIZADA
 // ==========================================
 app.post('/api/orders', (req, res) => {
-  // Ahora extraemos y procesamos también 'prenda' de forma independiente
   const { id_empresa, prenda, cliente, servicio, estado, total } = req.body;
 
   // Validación incluyendo el nuevo campo obligatorio
@@ -155,8 +154,8 @@ app.post('/api/orders', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  // Forzamos 'EN_LAVADO' por defecto si el estado viene vacío o no definido
-  db.query(sql, [id_empresa, prenda, cliente, servicio, estado || 'EN_LAVADO', total], (err, result) => {
+  // Cambiado por defecto a 'SIN_EMPEZAR' en lugar de 'EN_LAVADO' para coincidir con tu nuevo flujo inicial
+  db.query(sql, [id_empresa, prenda, cliente, servicio, estado || 'SIN_EMPEZAR', total], (err, result) => {
     if (err) {
       console.error("❌ Error al insertar el pedido en MySQL:", err);
       return res.status(500).json({ message: "Error interno al guardar el pedido en el servidor local." });
@@ -167,6 +166,30 @@ app.post('/api/orders', (req, res) => {
       message: "Pedido guardado correctamente.", 
       id_pedido: result.insertId 
     });
+  });
+});
+
+// ==========================================
+// NUEVA RUTA: ACTUALIZAR ESTADO DE UN PEDIDO
+// ==========================================
+app.put('/api/orders/:id_pedido/status', (req, res) => {
+  const { id_pedido } = req.params;
+  const { estado } = req.body;
+
+  if (!estado) {
+    return res.status(400).json({ message: "El nuevo estado es obligatorio." });
+  }
+
+  const sql = `UPDATE pedido SET estado = ? WHERE id_pedido = ?`;
+
+  db.query(sql, [estado, id_pedido], (err, result) => {
+    if (err) {
+      console.error("❌ Error al actualizar el estado en MySQL:", err);
+      return res.status(500).json({ message: "Error interno al actualizar el estado." });
+    }
+    
+    console.log(`✅ Estado del pedido #${id_pedido} cambiado a: ${estado}`);
+    return res.json({ message: "Estado actualizado correctamente en la base de datos." });
   });
 });
 

@@ -7,18 +7,17 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
-// Interfaz actualizada para reflejar la columna 'prenda' añadida en MySQL
+// Interfaz actualizada con los nuevos tipos de estados sincronizados con MySQL
 interface Pedido {
     id_pedido: number;
     prenda: string;
     cliente: string;
     servicio: string;
-    estado: 'EN_LAVADO' | 'LISTO' | 'ENTREGADO';
+    estado: 'SIN_EMPEZAR' | 'EN_LAVADO' | 'EN_SECADO' | 'ACABADO' | 'ENTREGADO';
     total: number;
 }
 
 const Dashboard = () => {
-    // Estados dinámicos para las estadísticas y los pedidos de la DB
     const [statsData, setStatsData] = useState({
         pedidosHoy: 0,
         enProceso: 0,
@@ -28,15 +27,12 @@ const Dashboard = () => {
     const [recentOrders, setRecentOrders] = useState<Pedido[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // ID de la empresa temporal (el mismo que usamos en el formulario de Nuevo Pedido)
     const ID_EMPRESA = 1;
 
     // Función para consultar de forma asíncrona tu Backend local
     const cargarDatosDashboard = async () => {
         try {
             setLoading(true);
-            
-            // Petición paralela a ambos endpoints locales usando el ID de empresa activo
             const [resStats, resRecent] = await Promise.all([
                 fetch(`http://localhost:5000/api/dashboard/stats/${ID_EMPRESA}`),
                 fetch(`http://localhost:5000/api/dashboard/recent/${ID_EMPRESA}`)
@@ -49,7 +45,6 @@ const Dashboard = () => {
             const dataStats = await resStats.json();
             const dataRecent = await resRecent.json();
 
-            // Seteamos las variables de estado con información de MySQL
             setStatsData(dataStats);
             setRecentOrders(dataRecent);
         } catch (error) {
@@ -59,18 +54,51 @@ const Dashboard = () => {
         }
     };
 
-    // Al montar el componente, disparamos la lectura a MySQL Workbench
+    // Nueva función para lanzar la petición PUT al cambiar el selector de estado
+    const handleStatusChange = async (id_pedido: number, nuevoEstado: string) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/orders/${id_pedido}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ estado: nuevoEstado }),
+            });
+
+            if (!response.ok) {
+                throw new Error("No se pudo actualizar el estado en el servidor");
+            }
+
+            // Si se guarda con éxito, recargamos los datos para recalcular las tarjetas de métricas
+            await cargarDatosDashboard();
+        } catch (error) {
+            alert("Error al actualizar el estado del pedido.");
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
         cargarDatosDashboard();
     }, []);
 
-    // Estructura adaptativa de las tarjetas
     const statsConfig = [
         { label: 'Pedidos Hoy', value: `${statsData.pedidosHoy}`, icon: <FiBox />, color: 'bg-blue-500' },
         { label: 'En Proceso', value: `${statsData.enProceso}`, icon: <FiClock />, color: 'bg-amber-500' },
         { label: 'Listos para Entrega', value: `${statsData.listosEntrega}`, icon: <FiCheckCircle />, color: 'bg-emerald-500' },
         { label: 'Ingresos Mes', value: `${statsData.ingresosMes.toFixed(2)}€`, icon: <FiTrendingUp />, color: 'bg-indigo-500' },
     ];
+
+    // Función auxiliar para pintar las etiquetas del selector dinámico según el estado
+    const getStatusStyles = (estado: string) => {
+        switch (estado) {
+            case 'SIN_EMPEZAR': return 'bg-slate-100 text-slate-700 border-slate-200';
+            case 'EN_LAVADO': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'EN_SECADO': return 'bg-amber-100 text-amber-700 border-amber-200';
+            case 'ACABADO': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'ENTREGADO': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+            default: return 'bg-slate-100 text-slate-600 border-slate-200';
+        }
+    };
 
     return (
         <div className="w-full max-w-7xl mx-auto space-y-8 p-6">
@@ -125,7 +153,7 @@ const Dashboard = () => {
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Cliente</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Prenda</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Servicio</th>
-                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Estado</th>
+                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Estado de Prenda</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Total</th>
                             </tr>
                         </thead>
@@ -152,15 +180,24 @@ const Dashboard = () => {
                                         <td className="px-8 py-5 text-sm font-medium text-slate-700">{order.cliente}</td>
                                         <td className="px-8 py-5 text-sm font-medium text-slate-600">{order.prenda}</td>
                                         <td className="px-8 py-5 text-sm text-slate-500">{order.servicio}</td>
-                                        <td className="px-8 py-5">
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                                order.estado === 'LISTO' ? 'bg-emerald-100 text-emerald-700' :
-                                                order.estado === 'EN_LAVADO' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                                            }`}>
-                                                {order.estado.replace('_', ' ')}
-                                            </span>
+                                        
+                                        {/* NUEVO COLUMNA: Selector interactivo para modificar el estado */}
+                                        <td className="px-8 py-3">
+                                            <select
+                                                value={order.estado}
+                                                onChange={(e) => handleStatusChange(order.id_pedido, e.target.value)}
+                                                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border outline-none cursor-pointer transition-all ${getStatusStyles(order.estado)}`}
+                                            >
+                                                <option value="SIN_EMPEZAR">Sin Empezar</option>
+                                                <option value="EN_LAVADO">En Lavado</option>
+                                                <option value="EN_SECADO">En Secado</option>
+                                                <option value="ACABADO">Acabado</option>
+                                                <option value="ACABADO">Listo para entregar</option>
+                                                <option value="ENTREGADO">Entregado</option>
+                                            </select>
                                         </td>
-                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">{order.total.toFixed(2)}€</td>
+                                        
+                                        <td className="px-8 py-5 text-sm font-bold text-slate-900">{Number(order.total).toFixed(2)}€</td>
                                     </tr>
                                 ))
                             )}
