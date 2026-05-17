@@ -107,7 +107,7 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
       pedidosHoy: results[0].pedidosHoy || 0,
       enProceso: results[0].enProceso || 0,
       listosEntrega: results[0].listosEntrega || 0,
-       ingresosMes: Number(results[0].ingresosMes) || 0
+      ingresosMes: Number(results[0].ingresosMes) || 0
     });
   });
 });
@@ -165,7 +165,7 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE UN PEDIDO
+// RUTA: ACTUALIZAR ESTADO DE UN PEDIDO + FACTURACIÓN AUTOMÁTICA
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
@@ -175,16 +175,109 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
     return res.status(400).json({ message: "El nuevo estado es obligatorio." });
   }
 
-  const sql = `UPDATE pedido SET estado = ? WHERE id_pedido = ?`;
-
-  db.query(sql, [estado, id_pedido], (err, result) => {
+  db.beginTransaction((err) => {
     if (err) {
-      console.error("❌ Error al actualizar el estado en MySQL:", err);
-      return res.status(500).json({ message: "Error interno al actualizar el estado." });
+      console.error("❌ Error al iniciar transacción:", err);
+      return res.status(500).json({ message: "Error interno en el servidor." });
     }
-    
-    console.log(`✅ Estado del pedido #${id_pedido} cambiado a: ${estado}`);
-    return res.json({ message: "Estado actualizado correctamente en la base de datos." });
+
+    // 1. Actualizamos el estado del pedido en la tabla maestra
+    const sqlUpdatePedido = `UPDATE pedido SET estado = ? WHERE id_pedido = ?`;
+    db.query(sqlUpdatePedido, [estado, id_pedido], (err, result) => {
+      if (err) {
+        return db.rollback(() => {
+          console.error("❌ Error al actualizar estado en MySQL:", err);
+          res.status(500).json({ message: "Error al actualizar el estado." });
+        });
+      }
+
+      // Si no pasa a estar entregado, cerramos la transacción guardando el taller
+      if (estado !== 'ENTREGADO') {
+        return db.commit((err) => {
+          if (err) {
+            return db.rollback(() => res.status(500).json({ message: "Error al confirmar cambios." }));
+          }
+          console.log(`✅ Estado del pedido #${id_pedido} cambiado a: ${estado}`);
+          return res.json({ message: "Estado actualizado correctamente." });
+        });
+      }
+
+      // 2. Si pasa a 'ENTREGADO', generamos el documento fiscal
+      const sqlCheckFactura = `SELECT id_factura FROM factura WHERE id_pedido = ?`;
+      db.query(sqlCheckFactura, [id_pedido], (err, facturaRows) => {
+        if (err) {
+          return db.rollback(() => res.status(500).json({ message: "Error al verificar duplicidad fiscal." }));
+        }
+
+        if (facturaRows.length > 0) {
+          return db.commit((err) => {
+            if (err) return db.rollback(() => res.status(500).json({ message: "Error en commit." }));
+            console.log(`✅ Pedido #${id_pedido} pasado a ENTREGADO. Ya tenía factura previa.`);
+            return res.json({ message: "Estado actualizado. La factura ya existía." });
+          });
+        }
+
+        // 3. Obtenemos datos económicos del ticket y calculamos el consecutivo anual correlativo
+        const sqlGetData = `
+          SELECT total, id_empresa, YEAR(CURDATE()) as anio_actual 
+          FROM pedido WHERE id_pedido = ?
+        `;
+        db.query(sqlGetData, [id_pedido], (err, pedidoData) => {
+          if (err || pedidoData.length === 0) {
+            return db.rollback(() => res.status(500).json({ message: "Error extrayendo datos del pedido." }));
+          }
+
+          const { total, id_empresa, anio_actual } = pedidoData[0];
+
+          const sqlLastNum = `
+            SELECT num_factura FROM factura 
+            WHERE id_empresa = ? AND num_factura LIKE ? 
+            ORDER BY id_factura DESC LIMIT 1
+          `;
+          db.query(sqlLastNum, [id_empresa, `FS-${anio_actual}-%`], (err, lastFactura) => {
+            if (err) {
+              return db.rollback(() => res.status(500).json({ message: "Error calculando serie correlativa." }));
+            }
+
+            let nuevoContador = 1;
+            if (lastFactura.length > 0) {
+              const partes = lastFactura[0].num_factura.split('-');
+              nuevoContador = parseInt(partes[2]) + 1;
+            }
+
+            const numFacturaFormateado = `FS-${anio_actual}-${String(nuevoContador).padStart(6, '0')}`;
+
+            // DESGLOSE OBLIGATORIO DE IMPUESTOS (IVA ESPAÑA 21%)
+            const totalFacturado = Number(total);
+            const baseImponible = totalFacturado / 1.21;
+            const importeIva = totalFacturado - baseImponible;
+
+            // 4. Guardamos el registro definitivo en la tabla factura
+            const sqlInsertFactura = `
+              INSERT INTO factura (id_pedido, id_empresa, num_factura, base_imponible, importe_iva, total_facturado, metodo_pago)
+              VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO')
+            `;
+
+            db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado], (err, resultInsert) => {
+              if (err) {
+                return db.rollback(() => {
+                  console.error("❌ Error al insertar en tabla factura:", err);
+                  res.status(500).json({ message: "Error al generar registro de factura." });
+                });
+              }
+
+              db.commit((err) => {
+                if (err) {
+                  return db.rollback(() => res.status(500).json({ message: "Error al consolidar factura." }));
+                }
+                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido}`);
+                return res.json({ message: "Pedido entregado y factura legal correlativa generada." });
+              });
+            });
+          });
+        });
+      });
+    });
   });
 });
 
@@ -238,7 +331,7 @@ app.get('/api/clientes/detalle/:cliente', (req, res) => {
 });
 
 // ==========================================
-// NUEVA RUTA: OBTENER TODOS LOS PEDIDOS DEL MES (PARA LOS MODALES DEL PANEL)
+// RUTA: OBTENER TODOS LOS PEDIDOS DEL MES (PARA LOS MODALES DEL PANEL)
 // ==========================================
 app.get('/api/dashboard/all-orders/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -262,137 +355,11 @@ app.get('/api/dashboard/all-orders/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE UN PEDIDO + FACTURACIÓN AUTOMÁTICA
-// ==========================================
-app.put('/api/orders/:id_pedido/status', (req, res) => {
-  const { id_pedido } = req.params;
-  const { estado } = req.body;
-
-  if (!estado) {
-    return res.status(400).json({ message: "El nuevo estado es obligatorio." });
-  }
-
-  // Iniciamos una transacción para asegurar que si falla la factura, no se cambie el estado
-  db.beginTransaction((err) => {
-    if (err) {
-      console.error("❌ Error al iniciar transacción:", err);
-      return res.status(500).json({ message: "Error interno en el servidor." });
-    }
-
-    // 1. Actualizamos el estado del pedido en el taller
-    const sqlUpdatePedido = `UPDATE pedido SET estado = ? WHERE id_pedido = ?`;
-    db.query(sqlUpdatePedido, [estado, id_pedido], (err, result) => {
-      if (err) {
-        return db.rollback(() => {
-          console.error("❌ Error al actualizar estado en MySQL:", err);
-          res.status(500).json({ message: "Error al actualizar el estado." });
-        });
-      }
-
-      // SI EL ESTADO NO ES ENTREGADO, TERMINAMOS LA TRANSACCIÓN AQUÍ Y GUARDAMOS
-      if (estado !== 'ENTREGADO') {
-        return db.commit((err) => {
-          if (err) {
-            return db.rollback(() => res.status(500).json({ message: "Error al confirmar cambios." }));
-          }
-          console.log(`✅ Estado del pedido #${id_pedido} cambiado a: ${estado}`);
-          return res.json({ message: "Estado actualizado correctamente." });
-        });
-      }
-
-      // 2. SI EL ESTADO ES 'ENTREGADO', PROCEDEMOS A LA FACTURACIÓN LEGAL
-      // Verificamos si ya existe una factura previa para evitar duplicados si cambian el estado varias veces
-      const sqlCheckFactura = `SELECT id_factura FROM factura WHERE id_pedido = ?`;
-      db.query(sqlCheckFactura, [id_pedido], (err, facturaRows) => {
-        if (err) {
-          return db.rollback(() => res.status(500).json({ message: "Error al verificar duplicidad fiscal." }));
-        }
-
-        // Si ya tiene factura, hacemos commit (no duplicamos el registro)
-        if (facturaRows.length > 0) {
-          return db.commit((err) => {
-            if (err) return db.rollback(() => res.status(500).json({ message: "Error en commit." }));
-            console.log(`✅ Pedido #${id_pedido} pasado a ENTREGADO. Ya tenía factura previa.`);
-            return res.json({ message: "Estado actualizado. La factura ya existía." });
-          });
-        }
-
-        // 3. Conseguimos los datos del pedido y el número de la última factura de este año para la serie correlativa
-        const sqlGetData = `
-          SELECT total, id_empresa, YEAR(CURDATE()) as anio actual 
-          FROM pedido WHERE id_pedido = ?
-        `;
-        db.query(sqlGetData, [id_pedido], (err, pedidoData) => {
-          if (err || pedidoData.length === 0) {
-            return db.rollback(() => res.status(500).json({ message: "Error extrayendo datos del pedido." }));
-          }
-
-          const { total, id_empresa } = pedidoData[0];
-          const anioActual = new Date().getFullYear();
-
-          // Buscamos el último correlativo del año en curso
-          const sqlLastNum = `
-            SELECT num_factura FROM factura 
-            WHERE id_empresa = ? AND num_factura LIKE ? 
-            ORDER BY id_factura DESC LIMIT 1
-          `;
-          db.query(sqlLastNum, [id_empresa, `FS-${anioActual}-%`], (err, lastFactura) => {
-            if (err) {
-              return db.rollback(() => res.status(500).json({ message: "Error calculando serie correlativa." }));
-            }
-
-            let nuevoContador = 1;
-            if (lastFactura.length > 0) {
-              // Extraemos el número final de "FS-2026-000001" -> 1 y le sumamos 1
-              const partes = lastFactura[0].num_factura.split('-');
-              nuevoContador = parseInt(partes[2]) + 1;
-            }
-
-            // Formateamos el número legal definitivo con ceros a la izquierda (ej: FS-2026-000001)
-            const numFacturaFormateado = `FS-${anioActual}-${String(nuevoContador).padStart(6, '0')}`;
-
-            // CALCULOS FISCALES DEL 21% DE IVA EN ESPAÑA
-            const totalFacturado = Number(total);
-            const baseImponible = totalFacturado / 1.21;
-            const importeIva = totalFacturado - baseImponible;
-
-            // 4. Insertamos el documento oficial en la tabla 'factura'
-            const sqlInsertFactura = `
-              INSERT INTO factura (id_pedido, id_empresa, num_factura, base_imponible, importe_iva, total_facturado, metodo_pago)
-              VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO')
-            `;
-
-            db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado], (err, resultInsert) => {
-              if (err) {
-                return db.rollback(() => {
-                  console.error("❌ Error al insertar en tabla factura:", err);
-                  res.status(500).json({ message: "Error al generar registro de factura." });
-                });
-              }
-
-              // Todo ha salido perfecto, consolidamos los cambios en MySQL de forma segura
-              db.commit((err) => {
-                if (err) {
-                  return db.rollback(() => res.status(500).json({ message: "Error al consolidar factura." }));
-                }
-                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido}`);
-                return res.json({ message: "Pedido entregado y factura legal correlativa generada." });
-              });
-            });
-          });
-        });
-      });
-    });
-  });
-});
-
-// ==========================================
 // RUTA: OBTENER DETALLES DE UN PEDIDO INDIVIDUAL (FACTURACIÓN CON HISTORIAL EN TABLA FACTURA)
 // ==========================================
 app.get('/api/orders/:id_pedido', (req, res) => {
   const { id_pedido } = req.params;
 
-  // Modificado: Ahora hace un LEFT JOIN con 'factura' para traer el 'num_factura' oficial de la tabla
   const sql = `
     SELECT p.id_pedido, p.prenda, p.cliente, p.servicio, p.estado, p.total, p.fecha_pedido,
            e.nombre_tintoreria, e.cif, e.direccion, e.municipio, e.provincia, e.codigo_postal,
@@ -412,6 +379,88 @@ app.get('/api/orders/:id_pedido', (req, res) => {
       return res.status(404).json({ message: "Pedido no encontrado." });
     }
     return res.json(results[0]);
+  });
+});
+
+// ==========================================
+// RUTA: OBTENER EL CATÁLOGO DE PRENDAS
+// ==========================================
+app.get('/api/prendas/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  const sql = 'SELECT id_prenda, nombre_prenda, precio_base FROM prenda WHERE id_empresa = ? ORDER BY nombre_prenda ASC';
+  
+  db.query(sql, [id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer catálogo de prendas:", err);
+      return res.status(500).json({ message: "Error al cargar el catálogo de prendas." });
+    }
+    return res.json(results);
+  });
+});
+
+// ==========================================
+// RUTA: AÑADIR NUEVA PRENDA AL CATÁLOGO
+// ==========================================
+app.post('/api/prendas', (req, res) => {
+  const { id_empresa, nombre_prenda, precio_base } = req.body;
+
+  if (!id_empresa || !nombre_prenda || precio_base === undefined) {
+    return res.status(400).json({ message: "Faltan campos obligatorios para registrar la prenda." });
+  }
+
+  const sql = 'INSERT INTO prenda (id_empresa, nombre_prenda, precio_base) VALUES (?, ?, ?)';
+
+  db.query(sql, [id_empresa, nombre_prenda, precio_base], (err, result) => {
+    if (err) {
+      console.error("❌ Error al insertar prenda en MySQL:", err);
+      return res.status(500).json({ message: "Error interno al guardar la prenda." });
+    }
+    return res.status(201).json({ message: "Prenda añadida con éxito.", id_prenda: result.insertId });
+  });
+});
+
+// ==========================================
+// RUTA: DATOS OPERATIVOS DE LA CAJA DIARIA
+// ==========================================
+app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  // Query 1: Pedidos listos para entrega inmediata (ACABADO)
+  const sqlPendientes = `
+    SELECT id_pedido, cliente, prenda, servicio, total, estado 
+    FROM pedido 
+    WHERE id_empresa = ? AND estado = 'ACABADO'
+    ORDER BY id_pedido DESC
+  `;
+
+  // Query 2: Sumatorios para el gráfico de métodos de pago de las facturas cobradas HOY
+  const sqlMetodos = `
+    SELECT metodo_pago, COALESCE(SUM(total_facturado), 0) as total
+    FROM factura
+    WHERE id_empresa = ? AND DATE(fecha_factura) = CURDATE()
+    GROUP BY metodo_pago
+  `;
+
+  db.query(sqlPendientes, [id_empresa], (err, pendientes) => {
+    if (err) return res.status(500).json({ message: "Error en servidor." });
+
+    db.query(sqlMetodos, [id_empresa], (err, metodosRows) => {
+      if (err) return res.status(500).json({ message: "Error en servidor." });
+
+      // Estructuramos los datos para el gráfico de caja
+      const graficoCaja = { EFECTIVO: 0, TARJETA: 0, BIZUM: 0 };
+      metodosRows.forEach(row => {
+        if (graficoCaja[row.metodo_pago] !== undefined) {
+          graficoCaja[row.metodo_pago] = Number(row.total);
+        }
+      });
+
+      return res.json({
+        pendientes,
+        graficoCaja
+      });
+    });
   });
 });
 

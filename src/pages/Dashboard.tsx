@@ -6,7 +6,8 @@ import {
     FiTrendingUp,
     FiX,
     FiFileText,
-    FiPrinter
+    FiPrinter,
+    FiArrowLeft
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -137,16 +138,17 @@ const Dashboard = () => {
                     <p className="text-slate-500">Bienvenido de nuevo a la gestión de tu tintorería.</p>
                 </div>
                 <div className="flex items-center gap-4">
+                    {/* NUEVO BOTÓN: Volver al menú de módulos (Inicio) */}
+                    <button 
+                        onClick={() => navigate('/inicio')}
+                        className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm"
+                    >
+                        <FiArrowLeft /> Menú Principal
+                    </button>
                     {/* BOTÓN: Listado de Clientes */}
                     <Link to="/clientes">
-                        <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95">
+                        <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm">
                             Ver Clientes
-                        </button>
-                    </Link>
-                    {/* BOTÓN: Nuevo Pedido */}
-                    <Link to="/nuevo-pedido">
-                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
-                            + Nuevo Pedido
                         </button>
                     </Link>
                 </div>

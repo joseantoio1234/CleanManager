@@ -26,7 +26,12 @@ const Login = () => {
     try {
       // 1. Intentamos el login real
       await authRepository.signIn(email, password);
-      navigate('/dashboard'); 
+      
+      // Opcional: Aquí podrías setear los valores en localStorage si tu authRepository no lo hace ya:
+      // localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
+      
+      // MODIFICADO: Ahora redirige al Hub Central de Módulos
+      navigate('/inicio'); 
 
     } catch (error: any) {
       console.error("Error en login:", error);
@@ -34,10 +39,12 @@ const Login = () => {
       // --- BYPASS DE RED ---
       // Si el error es de DNS/WiFi bloqueado, permitimos entrar para seguir trabajando
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
-        console.warn("Red bloqueada. Entrando por bypass de desarrollo...");
-        navigate('/dashboard');
+        console.warn("Red bloqueada. Entrando por bypass de desarrollo hacia la vista de inicio...");
+        
+        // MODIFICADO: El bypass de desarrollo también te lleva directo al Hub Central
+        navigate('/inicio');
       } else {
-        // Errores reales de Supabase (ej: contraseña incorrecta)
+        // Errores reales de autenticación (ej: contraseña incorrecta)
         setErrorMsg("Credenciales inválidas o error de servidor.");
       }
     } finally {
