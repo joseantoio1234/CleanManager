@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiDollarSign, FiSearch, FiCheckCircle, FiTrendingUp, FiCreditCard, FiSmartphone } from 'react-icons/fi';
+import { FiArrowLeft, FiDollarSign, FiSearch, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
+
+// Importaciones necesarias de Chart.js y el componente adaptador de React
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
+
+// Registramos los elementos esenciales en el núcleo de Chart.js
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface PedidoListo {
     id_pedido: number;
@@ -44,11 +51,60 @@ const Cobros = () => {
         p.id_pedido.toString() === busqueda
     );
 
-    // Cálculos para las proporciones del gráfico visual de barras
     const totalRecaudadoHoy = statsCaja.EFECTIVO + statsCaja.TARJETA + statsCaja.BIZUM;
-    const porcentajeEfectivo = totalRecaudadoHoy > 0 ? (statsCaja.EFECTIVO / totalRecaudadoHoy) * 100 : 0;
-    const porcentajeTarjeta = totalRecaudadoHoy > 0 ? (statsCaja.TARJETA / totalRecaudadoHoy) * 100 : 0;
-    const porcentajeBizum = totalRecaudadoHoy > 0 ? (statsCaja.BIZUM / totalRecaudadoHoy) * 100 : 0;
+
+    // ==========================================
+    // CONFIGURACIÓN ESTRUCTURAL DEL GRÁFICO (DÓNUT)
+    // ==========================================
+    const dataGrafico = {
+        labels: ['Efectivo', 'Tarjeta', 'Bizum'],
+        datasets: [
+            {
+                data: [statsCaja.EFECTIVO, statsCaja.TARJETA, statsCaja.BIZUM],
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.85)', // Esmeralda para Efectivo
+                    'rgba(59, 130, 246, 0.85)', // Azul para Tarjeta
+                    'rgba(99, 102, 241, 0.85)'  // Índigo para Bizum
+                ],
+                borderColor: [
+                    '#10b981', 
+                    '#3b82f6', 
+                    '#6366f1'
+                ],
+                borderWidth: 2,
+                hoverOffset: 6,
+            },
+        ],
+    };
+
+    const opcionesGrafico = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right' as const,
+                labels: {
+                    font: {
+                        family: 'ui-sans-serif, system-ui, sans-serif',
+                        weight: 'bold' as const,
+                        size: 12
+                    },
+                    boxWidth: 12,
+                    padding: 15,
+                    color: '#475569' // Color Slate 600
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context: any) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        return ` ${label}: ${value.toFixed(2)}€`;
+                    }
+                }
+            }
+        },
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-200">
@@ -63,7 +119,7 @@ const Cobros = () => {
                 </button>
             </div>
 
-            {/* SECCIÓN SUPERIOR: Resumen de Caja y Gráfico de Distribución */}
+            {/* SECCIÓN SUPERIOR: Resumen de Caja y Gráfico Circular de Distribución */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Métricas rápidas */}
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
@@ -78,59 +134,38 @@ const Cobros = () => {
                     </div>
                     <div className="divide-y divide-slate-50 text-xs font-bold text-slate-600 pt-2">
                         <div className="flex justify-between py-2 items-center">
-                            <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2 h-2 rounded-full bg-emerald-500"/> Efectivo:</span>
+                            <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"/> Efectivo:</span>
                             <span className="text-slate-900">{statsCaja.EFECTIVO.toFixed(2)}€</span>
                         </div>
                         <div className="flex justify-between py-2 items-center">
-                            <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2 h-2 rounded-full bg-blue-500"/> Tarjeta:</span>
+                            <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"/> Tarjeta:</span>
                             <span className="text-slate-900">{statsCaja.TARJETA.toFixed(2)}€</span>
                         </div>
                         <div className="flex justify-between py-2 items-center">
-                            <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2 h-2 rounded-full bg-purple-500"/> Bizum:</span>
+                            <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500"/> Bizum:</span>
                             <span className="text-slate-900">{statsCaja.BIZUM.toFixed(2)}€</span>
                         </div>
                     </div>
                 </div>
 
-                {/* GRÁFICO TACTIL DE RENDIMIENTO DE CAJA */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between">
-                    <div>
+                {/* NUEVO PANEL: GRÁFICO CIRCULAR INTERACTIVO (DÓNUT) */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between min-h-[220px]">
+                    <div className="mb-2">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Distribución de Ingresos</h3>
-                        <p className="text-xs text-slate-400">Porcentaje de recaudación según el medio de cobro seleccionado.</p>
+                        <p className="text-xs text-slate-400">Proporción visual de la recaudación según el medio de pago del mostrador.</p>
                     </div>
 
-                    {/* Barras dinámicas del Gráfico */}
-                    <div className="space-y-3 py-2">
-                        {/* Barra Efectivo */}
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-xs font-bold text-slate-600">
-                                <span>Efectivo ({porcentajeEfectivo.toFixed(0)}%)</span>
-                                <span>{statsCaja.EFECTIVO.toFixed(2)}€</span>
+                    {/* Contenedor del Canvas de Chart.js */}
+                    <div className="relative flex-1 h-36 max-h-[150px] w-full flex justify-center lg:justify-start items-center">
+                        {totalRecaudadoHoy === 0 ? (
+                            <div className="text-center w-full text-xs text-slate-400 font-medium py-8">
+                                No se registran transacciones cobradas hoy para estructurar el gráfico.
                             </div>
-                            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${porcentajeEfectivo}%` }} />
+                        ) : (
+                            <div className="w-full h-full max-w-[280px]">
+                                <Doughnut data={dataGrafico} options={opcionesGrafico} />
                             </div>
-                        </div>
-                        {/* Barra Tarjeta */}
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-xs font-bold text-slate-600">
-                                <span>Tarjeta ({porcentajeTarjeta.toFixed(0)}%)</span>
-                                <span>{statsCaja.TARJETA.toFixed(2)}€</span>
-                            </div>
-                            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div className="bg-blue-500 h-full rounded-full transition-all duration-500" style={{ width: `${porcentajeTarjeta}%` }} />
-                            </div>
-                        </div>
-                        {/* Barra Bizum */}
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-xs font-bold text-slate-600">
-                                <span>Bizum ({porcentajeBizum.toFixed(0)}%)</span>
-                                <span>{statsCaja.BIZUM.toFixed(2)}€</span>
-                            </div>
-                            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div className="bg-purple-500 h-full rounded-full transition-all duration-500" style={{ width: `${porcentajeBizum}%` }} />
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -182,7 +217,6 @@ const Cobros = () => {
                                         <td className="px-8 py-5 text-sm text-slate-400">{order.servicio}</td>
                                         <td className="px-8 py-5 text-sm font-black text-slate-900">{Number(order.total).toFixed(2)}€</td>
                                         <td className="px-8 py-3 text-center">
-                                            {/* Redirige directo a la factura para seleccionar el método de pago oficial y guardar */}
                                             <button
                                                 onClick={() => navigate(`/factura/${order.id_pedido}`)}
                                                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 mx-auto"
