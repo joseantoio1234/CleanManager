@@ -4,20 +4,28 @@ import Login from '../components/forms/LoginForm';
 import Register from '../components/forms/RegisterForm';
 import Dashboard from '../pages/Dashboard'; 
 import NuevoPedido from '../pages/NuevoPedido';
-import Perfil from '../pages/Perfil'; // Importamos la nueva vista de perfil
+import Perfil from '../pages/Perfil'; 
+import Clientes from '../pages/Clientes';
+import DetalleCliente from '../pages/DetalleCliente';
+import Factura from '../pages/Factura'; // Importamos la nueva vista de facturación fiscal
 import { Navbar } from '../components/common/Navbar';
 import { NavbarPrivate } from '../components/common/NavbarPrivate';
 import { Footer } from '../components/common/Footer';
 
 import '../styles/index.css';
-import Clientes from '../pages/Clientes';
-import DetalleCliente from '../pages/DetalleCliente';
 
 function AppContent() {
   const location = useLocation();
   
-  // Agregamos '/perfil' a la lista de rutas que usan el Navbar de gestión
-  const isPrivateRoute = ['/dashboard', '/nuevo-pedido', '/perfil'].includes(location.pathname);
+  // Sincronizamos todas las rutas de gestión para que rendericen el Navbar privado
+  const isPrivateRoute = [
+    '/dashboard', 
+    '/nuevo-pedido', 
+    '/perfil', 
+    '/clientes'
+  ].includes(location.pathname) || 
+  location.pathname.startsWith('/clientes/detalle/') || 
+  location.pathname.startsWith('/factura/');
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
@@ -27,7 +35,9 @@ function AppContent() {
 
       <main className="flex-grow">
         <Routes>
-          {/* Rutas Públicas */}
+          {/* ==========================================
+              RUTAS PÚBLICAS
+             ========================================== */}
           <Route path="/" element={<Landing />} />
           
           <Route path="/login" element={
@@ -42,7 +52,9 @@ function AppContent() {
             </div>
           } />
           
-          {/* Rutas de Gestión (Privadas) */}
+          {/* ==========================================
+              RUTAS DE GESTIÓN (PRIVADAS)
+             ========================================== */}
           <Route path="/dashboard" element={
             <div className="py-10">
               <Dashboard />
@@ -55,19 +67,33 @@ function AppContent() {
             </div>
           } />
 
-          {/* Nueva Ruta de Perfil */}
           <Route path="/perfil" element={
             <div className="py-10">
               <Perfil />
             </div>
           } />
 
-          {/* Redirección por defecto */}
-          <Route path="*" element={<Navigate to="/" />} />
-          
-          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/clientes" element={
+            <div className="py-10">
+              <Clientes />
+            </div>
+          } />
 
-          <Route path="/clientes/detalle/:nombre" element={<DetalleCliente />} />
+          <Route path="/clientes/detalle/:nombre" element={
+            <div className="py-10">
+              <DetalleCliente />
+            </div>
+          } />
+
+          {/* Nueva Ruta para la Factura Simplificada */}
+          <Route path="/factura/:id_pedido" element={
+            <div className="py-10">
+              <Factura />
+            </div>
+          } />
+
+          {/* Redirección por defecto para rutas inexistentes */}
+          <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>
       </main>
