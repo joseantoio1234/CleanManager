@@ -102,17 +102,26 @@ const Dashboard = () => {
 
     return (
         <div className="w-full max-w-7xl mx-auto space-y-8 p-6">
-            {/* Cabecera de Bienvenida */}
+            {/* Cabecera de Bienvenida con los dos botones */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Panel de Control</h1>
                     <p className="text-slate-500">Bienvenido de nuevo a la gestión de tu tintorería.</p>
                 </div>
-                <Link to="/nuevo-pedido">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
-                        + Nuevo Pedido
-                    </button>
-                </Link>
+                <div className="flex items-center gap-4">
+                    {/* BOTÓN: Listado de Clientes */}
+                    <Link to="/clientes">
+                        <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95">
+                            Ver Clientes
+                        </button>
+                    </Link>
+                    {/* BOTÓN: Nuevo Pedido */}
+                    <Link to="/nuevo-pedido">
+                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
+                            + Nuevo Pedido
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             {/* Grid de Estadísticas Dinámicas */}
@@ -181,7 +190,7 @@ const Dashboard = () => {
                                         <td className="px-8 py-5 text-sm font-medium text-slate-600">{order.prenda}</td>
                                         <td className="px-8 py-5 text-sm text-slate-500">{order.servicio}</td>
                                         
-                                        {/* NUEVO COLUMNA: Selector interactivo para modificar el estado */}
+                                        {/* Selector dinámico con las opciones limpias y unificadas */}
                                         <td className="px-8 py-3">
                                             <select
                                                 value={order.estado}
@@ -191,7 +200,6 @@ const Dashboard = () => {
                                                 <option value="SIN_EMPEZAR">Sin Empezar</option>
                                                 <option value="EN_LAVADO">En Lavado</option>
                                                 <option value="EN_SECADO">En Secado</option>
-                                                <option value="ACABADO">Acabado</option>
                                                 <option value="ACABADO">Listo para entregar</option>
                                                 <option value="ENTREGADO">Entregado</option>
                                             </select>

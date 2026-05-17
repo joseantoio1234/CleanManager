@@ -10,6 +10,8 @@ import { NavbarPrivate } from '../components/common/NavbarPrivate';
 import { Footer } from '../components/common/Footer';
 
 import '../styles/index.css';
+import Clientes from '../pages/Clientes';
+import DetalleCliente from '../pages/DetalleCliente';
 
 function AppContent() {
   const location = useLocation();
@@ -62,6 +64,11 @@ function AppContent() {
 
           {/* Redirección por defecto */}
           <Route path="*" element={<Navigate to="/" />} />
+          
+          <Route path="/clientes" element={<Clientes />} />
+
+          <Route path="/clientes/detalle/:nombre" element={<DetalleCliente />} />
+
         </Routes>
       </main>
 

@@ -82,20 +82,17 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ==========================================
-// RUTA: ESTADÍSTICAS DEL PANEL (MÉTRICAS) - ACTUALIZADA
+// RUTA: ESTADÍSTICAS DEL PANEL (MÉTRICAS)
 // ==========================================
 app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
-  // Consulta adaptada a la nueva lista de estados:
-  // - En proceso: lavado o secado.
-  // - Listos para entrega: acabado.
   const sql = `
     SELECT 
       COUNT(CASE WHEN DATE(fecha_pedido) = CURDATE() THEN 1 END) as pedidosHoy,
       COUNT(CASE WHEN estado IN ('EN_LAVADO', 'EN_SECADO') THEN 1 END) as enProceso,
       COUNT(CASE WHEN estado = 'ACABADO' THEN 1 END) as listosEntrega,
-      COALESCE(SUM(CASE WHEN MONTH(fecha_pedido) = MONTH(CURDATE()) AND YEAR(fecha_pedido) = YEAR(CURDATE()) THEN total ELSE 0 END), 0) as ingresosMes
+      COALESCE(SUM(CASE WHEN MONTH(fecha_pedido) = MONTH(CURDATE()) AND YEAR(fecha_pedido) = YEAR(CURDATE()) AND estado = 'ENTREGADO' THEN total ELSE 0 END), 0) as ingresosMes
     FROM pedido 
     WHERE id_empresa = ?
   `;
@@ -139,12 +136,11 @@ app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: CREAR NUEVO PEDIDO - ACTUALIZADA
+// RUTA: CREAR NUEVO PEDIDO
 // ==========================================
 app.post('/api/orders', (req, res) => {
   const { id_empresa, prenda, cliente, servicio, estado, total } = req.body;
 
-  // Validación incluyendo el nuevo campo obligatorio
   if (!id_empresa || !prenda || !cliente || !servicio || !total) {
     return res.status(400).json({ message: "Faltan campos obligatorios para crear el pedido." });
   }
@@ -154,7 +150,6 @@ app.post('/api/orders', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  // Cambiado por defecto a 'SIN_EMPEZAR' en lugar de 'EN_LAVADO' para coincidir con tu nuevo flujo inicial
   db.query(sql, [id_empresa, prenda, cliente, servicio, estado || 'SIN_EMPEZAR', total], (err, result) => {
     if (err) {
       console.error("❌ Error al insertar el pedido en MySQL:", err);
@@ -170,7 +165,7 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// NUEVA RUTA: ACTUALIZAR ESTADO DE UN PEDIDO
+// RUTA: ACTUALIZAR ESTADO DE UN PEDIDO
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
@@ -190,6 +185,55 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
     
     console.log(`✅ Estado del pedido #${id_pedido} cambiado a: ${estado}`);
     return res.json({ message: "Estado actualizado correctamente en la base de datos." });
+  });
+});
+
+// ==========================================
+// NUEVA RUTA: OBTENER LISTADO UNIFICADO DE CLIENTES
+// ==========================================
+app.get('/api/clientes/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  const sql = `
+    SELECT 
+      MIN(id_pedido) as id_referencia, 
+      cliente, 
+      COUNT(id_pedido) as totalPedidos, 
+      COALESCE(SUM(total), 0) as totalGastado 
+    FROM pedido 
+    WHERE id_empresa = ? 
+    GROUP BY cliente 
+    ORDER BY cliente ASC
+  `;
+
+  db.query(sql, [id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer clientes de MySQL:", err);
+      return res.status(500).json({ message: "Error al cargar el listado de clientes." });
+    }
+    return res.json(results);
+  });
+});
+
+// ==========================================
+// RUTA: OBTENER TODOS LOS PEDIDOS DE UN CLIENTE
+// ==========================================
+app.get('/api/clientes/detalle/:cliente', (req, res) => {
+  const { cliente } = req.params;
+
+  const sql = `
+    SELECT id_pedido, prenda, servicio, estado, total, fecha_pedido 
+    FROM pedido 
+    WHERE cliente = ? 
+    ORDER BY fecha_pedido DESC
+  `;
+
+  db.query(sql, [cliente], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer historial del cliente:", err);
+      return res.status(500).json({ message: "Error al cargar el historial del cliente." });
+    }
+    return res.json(results);
   });
 });
 
