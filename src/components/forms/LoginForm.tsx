@@ -4,11 +4,14 @@ import { authRepository } from '../../database/repositories/auth.repository';
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { validateEmail } from '../../utils/regex';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false); // Nuevo estado para la pantalla de carga
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
 
@@ -16,7 +19,6 @@ const Login = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    // Validación básica antes de intentar conexión
     if (!validateEmail(email)) {
       setErrorMsg('Introduce un formato de correo válido.');
       return;
@@ -24,27 +26,39 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // 1. Intentamos el login real
-      await authRepository.signIn(email, password);
+      // 1. Intentamos el inicio de sesión real
+      const session = await authRepository.signIn(email, password) as any;
       
-      // Opcional: Aquí podrías setear los valores en localStorage si tu authRepository no lo hace ya:
-      // localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
+      // Guardamos dinámicamente los datos de la sesión para que los lea el Navbar y el Hub
+      if (session && session.user) {
+        localStorage.setItem('id_empresa', session.user.id || '1');
+        localStorage.setItem('nombre_tintoreria', session.user.user_metadata?.nombre_tintoreria || 'Tintorería Jerez');
+      } else {
+        localStorage.setItem('id_empresa', '1');
+        localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
+      }
       
-      // MODIFICADO: Ahora redirige al Hub Central de Módulos
-      navigate('/inicio'); 
+      // Activamos la animación de transición justo antes de redirigir
+      setIsRedirecting(true);
+      setTimeout(() => {
+        navigate('/inicio'); 
+      }, 1000); // Pequeño delay de 1 segundo para que se aprecie el efecto premium
 
     } catch (error: any) {
       console.error("Error en login:", error);
-
-      // --- BYPASS DE RED ---
-      // Si el error es de DNS/WiFi bloqueado, permitimos entrar para seguir trabajando
+      
+      // --- BYPASS DE RED EN DESARROLLO ---
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
-        console.warn("Red bloqueada. Entrando por bypass de desarrollo hacia la vista de inicio...");
+        console.warn("Red bloqueada. Aplicando bypass local de desarrollo...");
         
-        // MODIFICADO: El bypass de desarrollo también te lleva directo al Hub Central
-        navigate('/inicio');
+        localStorage.setItem('id_empresa', '1');
+        localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
+        
+        setIsRedirecting(true);
+        setTimeout(() => {
+          navigate('/inicio');
+        }, 1000);
       } else {
-        // Errores reales de autenticación (ej: contraseña incorrecta)
         setErrorMsg("Credenciales inválidas o error de servidor.");
       }
     } finally {
@@ -52,6 +66,28 @@ const Login = () => {
     }
   };
 
+  // ==========================================
+  // VISTA DE TRANSICIÓN: INICIANDO SESIÓN
+  // ==========================================
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px] animate-in fade-in duration-300">
+        <div className="w-full max-w-[420px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/30 border border-white flex flex-col items-center space-y-6 text-center">
+          
+          {/* Spinner animado con Tailwind */}
+          <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+          
+          <div className="space-y-1">
+            <h2 className="text-xl font-black text-slate-800">Iniciando sesión</h2>
+            <p className="text-xs text-slate-400 font-medium">Preparando tu espacio de trabajo en CleanManager...</p>
+          </div>
+          
+        </div>
+      </div>
+    );
+  }
+
+  // Vista del formulario normal
   return (
     <div className="flex items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px]">
       <div className="w-full max-w-[520px] bg-white px-10 py-8 md:px-14 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/40 flex flex-col items-center border border-white">
@@ -65,7 +101,6 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Mensaje de error general si falla el login */}
         {errorMsg && (
           <div className="w-full bg-red-50 border border-red-100 text-red-500 text-xs font-bold p-3 rounded-xl mb-4 text-center animate-shake">
             {errorMsg}
@@ -81,7 +116,7 @@ const Login = () => {
             <Input
               type="email"
               placeholder="nombre@ejemplo.com"
-              className={`w-full border-none bg-slate-100 h-12 px-5 text-slate-900 rounded-2xl focus:ring-2 focus:ring-blue-400 transition-all outline-none ${errorMsg ? 'ring-1 ring-red-300' : ''}`}
+              className={`w-full border-none bg-slate-50 h-12 px-5 text-slate-900 rounded-2xl focus:ring-2 focus:ring-blue-400 transition-all outline-none ${errorMsg ? 'ring-1 ring-red-300' : ''}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -92,14 +127,24 @@ const Login = () => {
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
               Contraseña
             </label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              className={`w-full border-none bg-slate-100 h-12 px-5 text-slate-900 rounded-2xl focus:ring-2 focus:ring-blue-400 transition-all outline-none ${errorMsg ? 'ring-1 ring-red-300' : ''}`}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative w-full flex items-center">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className={`w-full border-none bg-slate-50 h-12 pl-5 pr-12 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all ${errorMsg ? 'ring-1 ring-red-300' : ''}`}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 text-slate-400 hover:text-blue-600 transition-colors focus:outline-none flex items-center justify-center"
+                style={{ background: 'none', border: 'none', padding: 0 }}
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
           </div>
 
           <Button 

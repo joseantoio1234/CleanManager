@@ -5,8 +5,7 @@ import {
     FiPlusCircle, 
     FiDollarSign, 
     FiUsers, 
-    FiSettings, 
-    FiLogOut 
+    FiSettings 
 } from 'react-icons/fi';
 
 const Inicio = () => {
@@ -14,12 +13,6 @@ const Inicio = () => {
 
     // Recuperamos dinámicamente el nombre guardado durante el Login (fallback por si acaso)
     const nombreTintoreria = localStorage.getItem('nombre_tintoreria') || "Tintorería Jerez"; 
-
-    // Función limpia para cerrar la sesión activa del usuario
-    const handleCerrarSesion = () => {
-        localStorage.clear(); // Limpiamos los tokens, id_empresa y nombres cargados
-        navigate('/login');   // Redirigimos al formulario de entrada
-    };
 
     // Configuración modular de las tarjetas del menú principal adaptadas al empleado
     const modulos = [
@@ -43,7 +36,7 @@ const Inicio = () => {
             title: "Entregas y Cobros",
             description: "Buscar pedidos listos, gestionar el cobro en caja y emitir el ticket fiscal.",
             icon: <FiDollarSign />,
-            path: "/cobros", // CORREGIDO: Ahora te redirige directamente al panel TPV de caja
+            path: "/cobros", 
             color: "bg-indigo-600 shadow-indigo-100",
             badge: "Caja"
         },
@@ -60,8 +53,8 @@ const Inicio = () => {
     return (
         <div className="w-full max-w-6xl mx-auto p-6 space-y-10 animate-in fade-in duration-300">
             
-            {/* Cabecera de Bienvenida del HUB */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            {/* Cabecera de Bienvenida del HUB (Limpia y simétrica) */}
+            <div className="flex flex-col justify-start bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm w-full">
                 <div className="space-y-1">
                     <span className="text-[10px] bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                         Operador de Mostrador
@@ -73,14 +66,6 @@ const Inicio = () => {
                         Selecciona la acción u operación que vas a realizar en este momento.
                     </p>
                 </div>
-                
-                {/* Botón rápido de cerrar sesión */}
-                <button 
-                    onClick={handleCerrarSesion}
-                    className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-95 border border-rose-200/30"
-                >
-                    <FiLogOut /> Cerrar Sesión
-                </button>
             </div>
 
             {/* Cuadrícula (Grid) de Módulos Operativos */}
@@ -126,7 +111,7 @@ const Inicio = () => {
                 <div className="flex items-center gap-3">
                     <div className="text-slate-400 text-xl"><FiSettings /></div>
                     <p className="text-xs text-slate-500 font-medium">
-                        ¿Una prenda no aparece en la lista o necesitas reportar una incidence con un precio? Contacta con el <span className="font-bold text-slate-700">Administrador del Sistema</span>.
+                        ¿Una prenda no aparece en la lista o necesitas reportar una incidencia con un precio? Contacta con el <span className="font-bold text-slate-700">Administrador del Sistema</span>.
                     </p>
                 </div>
             </div>

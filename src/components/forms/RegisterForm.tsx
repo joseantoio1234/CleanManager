@@ -10,10 +10,13 @@ import {
   validateEmail, 
   validatePassword 
 } from '../../utils/regex';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false); // Estado para la pantalla de carga intermedia
+  const [showPassword, setShowPassword] = useState(false);
 
   // Estados de los campos
   const [formData, setFormData] = useState({
@@ -90,17 +93,18 @@ const Register = () => {
       // Intentamos el registro real
       await authRepository.signUp(formData.email, formData.password, companyData);
       
-      alert("¡Empresa registrada con éxito en la base de datos! Ahora puedes iniciar sesión.");
-      navigate('/login'); 
+      // En lugar del alert, disparamos la transición visual premium hacia el login
+      setIsRedirecting(true);
+      setTimeout(() => {
+        navigate('/login'); 
+      }, 1500); // 1.5 segundos para que de tiempo a asimilar la animación
 
     } catch (error: any) {
       console.error("Error real en registro:", error);
       
-      // Si el error es de RED (WiFi bloqueado), avisamos seriamente
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
         alert("ERROR DE CONEXIÓN: El WiFi actual bloquea la base de datos. Los datos NO se han guardado. Por favor, usa los datos de tu móvil.");
       } else {
-        // Si el error es de Supabase (ej: el email ya existe)
         alert("Error de registro: " + (error.message || "No se pudo guardar la empresa"));
       }
     } finally {
@@ -112,6 +116,30 @@ const Register = () => {
     errors[name] ? <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 animate-pulse">{errors[name]}</p> : null
   );
 
+  // ==========================================
+  // VISTA DE TRANSICIÓN: CREANDO LA CUENTA
+  // ==========================================
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-50 animate-in fade-in duration-300">
+        <div className="w-full max-w-[440px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/30 border border-white flex flex-col items-center space-y-6 text-center">
+          
+          {/* Spinner circular */}
+          <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+          
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-black text-slate-800">Creando tu cuenta</h2>
+            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+              Configurando el espacio operativo para <span className="text-blue-600 font-bold">{formData.nombre}</span> en CleanManager...
+            </p>
+          </div>
+          
+        </div>
+      </div>
+    );
+  }
+
+  // Vista estándar del formulario completo
   return (
     <div className="flex items-start justify-center w-full min-h-screen pt-4 md:pt-8 bg-slate-50 overflow-y-auto pb-10">
       <div className="w-full max-w-[700px] bg-white px-6 py-8 md:px-12 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/40 flex flex-col border border-white">
@@ -223,14 +251,26 @@ const Register = () => {
 
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-blue-400 uppercase ml-1">Contraseña *</label>
-              <Input 
-                name="password"
-                type="password" 
-                className={`rounded-xl bg-blue-50/30 border-none h-10 px-4 text-sm transition-all ${errors.password ? 'ring-1 ring-red-500' : ''}`}
-                value={formData.password} 
-                onChange={handleChange}
-                onBlur={() => validateField('password', formData.password)}
-              />
+              <div className="relative w-full flex items-center">
+                <input 
+                  name="password"
+                  type={showPassword ? "text" : "password"} 
+                  className={`w-full rounded-xl bg-blue-50/30 border-none h-10 pl-4 pr-12 text-sm transition-all text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.password ? 'ring-1 ring-red-500' : ''}`}
+                  value={formData.password} 
+                  onChange={handleChange}
+                  onBlur={() => validateField('password', formData.password)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 text-slate-400 hover:text-blue-600 transition-colors focus:outline-none flex items-center justify-center"
+                  style={{ background: 'none', border: 'none', padding: 0 }}
+                >
+                  {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                </button>
+              </div>
               <ErrorMsg name="password" />
             </div>
           </div>
