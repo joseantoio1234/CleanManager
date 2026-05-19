@@ -71,7 +71,7 @@ const Landing = () => {
         </div>
       </section>
 
-      <Footer />
+    
     </div>
   );
 };

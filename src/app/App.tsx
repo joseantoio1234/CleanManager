@@ -1,22 +1,23 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Landing from '../pages/Landing'; 
+import Landing from '../pages/Landing';
 import Login from '../components/forms/LoginForm';
 import Register from '../components/forms/RegisterForm';
-import Dashboard from '../pages/Dashboard'; 
+import Dashboard from '../pages/Dashboard';
 import NuevoPedido from '../pages/NuevoPedido';
-import Perfil from '../pages/Perfil'; 
+import Perfil from '../pages/Perfil';
 import Clientes from '../pages/Clientes';
 import DetalleCliente from '../pages/DetalleCliente';
-import Factura from '../pages/Factura'; 
-import Inicio from '../pages/Inicio'; 
-import Prendas from '../pages/Prendas'; 
-import NuevaPrenda from '../components/forms/NuevaPrenda'; 
+import Factura from '../pages/Factura';
+import Inicio from '../pages/Inicio';
+import Prendas from '../pages/Prendas';
+import NuevaPrenda from '../components/forms/NuevaPrenda';
 import Cobros from '../pages/Cobros'; // Importamos la nueva vista de caja y gráfico de cobros
 import { Navbar } from '../components/common/Navbar';
 import { NavbarPrivate } from '../components/common/NavbarPrivate';
 import { Footer } from '../components/common/Footer';
 
 import '../styles/index.css';
+import InicioAdmin from '../pages/InicioAdmin';
 
 function AppContent() {
   const location = useLocation();
@@ -24,6 +25,7 @@ function AppContent() {
   // Sincronizamos todas las rutas de gestión incluyendo el maestro de caja operativo
   const isPrivateRoute = [
     '/inicio',
+    '/inicio-admin',
     '/dashboard',
     '/nuevo-pedido',
     '/perfil',
@@ -122,6 +124,12 @@ function AppContent() {
           <Route path="/cobros" element={
             <div className="py-10">
               <Cobros />
+            </div>
+          } />
+
+          <Route path="/inicio-admin" element={
+            <div className="py-10">
+              <InicioAdmin />
             </div>
           } />
 
