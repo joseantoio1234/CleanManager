@@ -3,15 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authRepository } from '../../database/repositories/auth.repository';
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { validateEmail } from '../../utils/regex';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState(''); // Cambiado de email a username
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false); // Nuevo estado para la pantalla de carga
+  const [isRedirecting, setIsRedirecting] = useState(false); 
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
 
@@ -19,47 +18,67 @@ const Login = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!validateEmail(email)) {
-      setErrorMsg('Introduce un formato de correo válido.');
+    // Validación básica de longitud para el nombre de usuario
+    if (username.trim().length < 3) {
+      setErrorMsg('Introduce un nombre de usuario válido.');
       return;
     }
 
     setLoading(true);
     try {
-      // 1. Intentamos el inicio de sesión real
-      const session = await authRepository.signIn(email, password) as any;
+      // 1. Intentamos el inicio de sesión real apuntando a tu API Node/MySQL
+      const session = await authRepository.signIn(username, password) as any;
       
-      // Guardamos dinámicamente los datos de la sesión para que los lea el Navbar y el Hub
-      if (session && session.user) {
-        localStorage.setItem('id_empresa', session.user.id || '1');
-        localStorage.setItem('nombre_tintoreria', session.user.user_metadata?.nombre_tintoreria || 'Tintorería Jerez');
+      // Si el backend responde con los datos del usuario de MySQL
+      if (session) {
+        localStorage.setItem('id_empresa', session.id_empresa || '1');
+        localStorage.setItem('nombre_tintoreria', session.nombre_tintoreria || 'Tintorería Jerez');
+        localStorage.setItem('user_role', session.rol || 'empleado'); // Guardamos el rol ('admin' o 'empleado')
+        
+        // Activamos la animación de transición justo antes de redirigir
+        setIsRedirecting(true);
+        setTimeout(() => {
+          // Redirección condicional según el rol de la base de datos
+          if (session.rol === 'admin') {
+            navigate('/inicio-admin');
+          } else {
+            navigate('/inicio'); // Tu ruta principal de empleado
+          }
+        }, 1000);
+
       } else {
+        // Fallback de seguridad por si la respuesta viene vacía
         localStorage.setItem('id_empresa', '1');
         localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
+        localStorage.setItem('user_role', 'empleado');
+        setIsRedirecting(true);
+        setTimeout(() => { navigate('/inicio'); }, 1000);
       }
-      
-      // Activamos la animación de transición justo antes de redirigir
-      setIsRedirecting(true);
-      setTimeout(() => {
-        navigate('/inicio'); 
-      }, 1000); // Pequeño delay de 1 segundo para que se aprecie el efecto premium
 
     } catch (error: any) {
-      console.error("Error en login:", error);
+      console.error("Error en login MySQL:", error);
       
-      // --- BYPASS DE RED EN DESARROLLO ---
+      // --- BYPASS DE RED EN DESARROLLO (Si el servidor Express está apagado) ---
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
-        console.warn("Red bloqueada. Aplicando bypass local de desarrollo...");
+        console.warn("Servidor inaccesible. Aplicando bypass local de desarrollo...");
         
         localStorage.setItem('id_empresa', '1');
-        localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
+        localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez (Bypass)');
+        
+        // Comprobamos si incluye la palabra admin para desarrollo, si no, entra como empleado
+        const esAdminSimulado = username.toLowerCase().includes('admin');
+        localStorage.setItem('user_role', esAdminSimulado ? 'admin' : 'empleado');
         
         setIsRedirecting(true);
         setTimeout(() => {
-          navigate('/inicio');
+          if (esAdminSimulado) {
+            navigate('/inicio-admin');
+          } else {
+            navigate('/inicio');
+          }
         }, 1000);
       } else {
-        setErrorMsg("Credenciales inválidas o error de servidor.");
+        setErrorMsg("Usuario o contraseña incorrectos.");
       }
     } finally {
       setLoading(false);
@@ -109,16 +128,17 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="w-full space-y-4 text-left">
           
+          {/* Cambiado de Correo Electrónico a Usuario de Acceso */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-              Correo electrónico
+              Usuario de Acceso
             </label>
             <Input
-              type="email"
-              placeholder="nombre@ejemplo.com"
+              type="text"
+              placeholder="Tu nombre de usuario"
               className={`w-full border-none bg-slate-50 h-12 px-5 text-slate-900 rounded-2xl focus:ring-2 focus:ring-blue-400 transition-all outline-none ${errorMsg ? 'ring-1 ring-red-300' : ''}`}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>

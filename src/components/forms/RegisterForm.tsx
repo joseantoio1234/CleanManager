@@ -15,7 +15,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi';
 const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false); // Estado para la pantalla de carga intermedia
+  const [isRedirecting, setIsRedirecting] = useState(false); 
   const [showPassword, setShowPassword] = useState(false);
 
   // Estados de los campos
@@ -28,6 +28,7 @@ const Register = () => {
     municipio: '',
     provincia: '',
     email: '',
+    username: '',
     password: ''
   });
 
@@ -48,10 +49,13 @@ const Register = () => {
       error = 'Este campo es obligatorio';
     } else {
       switch (name) {
-        case 'cif': if (!validateCIF(value)) error = 'El CIF/NIF debe tener 9 caracteres'; break;
-        case 'telefono': if (!validateTelefono(value)) error = 'Debe tener 9 dígitos numéricos'; break;
-        case 'codigoPostal': if (!validateCP(value)) error = 'Debe tener 5 dígitos numéricos'; break;
+        case 'cif': if (!validateCIF(value)) error = 'CIF/NIF inválido'; break;
+        case 'telefono': if (!validateTelefono(value)) error = 'Mínimo 9 dígitos'; break;
+        case 'codigoPostal': if (!validateCP(value)) error = 'CP de 5 dígitos'; break;
         case 'email': if (!validateEmail(value)) error = 'Introduce un email válido'; break;
+        case 'username': 
+          if (value.trim().length < 4) error = 'Mínimo 4 caracteres'; 
+          break;
         case 'password': if (!validatePassword(value)) error = 'Contraseña insegura'; break;
       }
     }
@@ -67,7 +71,7 @@ const Register = () => {
 
     Object.entries(formData).forEach(([name, value]) => {
       if (!validateField(name, value)) {
-        currentErrors[name] = errors[name] || 'Campo inválido o vacío';
+        currentErrors[name] = errors[name] || 'Inválido';
         isValid = false;
       }
     });
@@ -87,23 +91,21 @@ const Register = () => {
         codigo_postal: formData.codigoPostal, 
         municipio: formData.municipio, 
         provincia: formData.provincia,
-        email_acceso: formData.email
+        email_contacto: formData.email,
+        usuario_acceso: formData.username
       };
       
-      // Intentamos el registro real
-      await authRepository.signUp(formData.email, formData.password, companyData);
+      await authRepository.signUp(formData.username, formData.password, companyData);
       
-      // En lugar del alert, disparamos la transición visual premium hacia el login
       setIsRedirecting(true);
       setTimeout(() => {
         navigate('/login'); 
-      }, 1500); // 1.5 segundos para que de tiempo a asimilar la animación
+      }, 1500); 
 
     } catch (error: any) {
-      console.error("Error real en registro:", error);
-      
+      console.error("Error en registro:", error);
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
-        alert("ERROR DE CONEXIÓN: El WiFi actual bloquea la base de datos. Los datos NO se han guardado. Por favor, usa los datos de tu móvil.");
+        alert("ERROR DE CONEXIÓN: El servidor API Express local parece estar apagado o bloqueado.");
       } else {
         alert("Error de registro: " + (error.message || "No se pudo guardar la empresa"));
       }
@@ -113,45 +115,42 @@ const Register = () => {
   };
 
   const ErrorMsg = ({ name }: { name: string }) => (
-    errors[name] ? <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 animate-pulse">{errors[name]}</p> : null
+    errors[name] ? <p className="text-[10px] text-red-500 font-bold mt-0.5 ml-1">{errors[name]}</p> : null
   );
 
-  // ==========================================
-  // VISTA DE TRANSICIÓN: CREANDO LA CUENTA
-  // ==========================================
   if (isRedirecting) {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-50 animate-in fade-in duration-300">
         <div className="w-full max-w-[440px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/30 border border-white flex flex-col items-center space-y-6 text-center">
-          
-          {/* Spinner circular */}
           <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
-          
           <div className="space-y-1.5">
             <h2 className="text-xl font-black text-slate-800">Creando tu cuenta</h2>
             <p className="text-xs text-slate-400 font-medium leading-relaxed">
-              Configurando el espacio operativo para <span className="text-blue-600 font-bold">{formData.nombre}</span> en CleanManager...
+              Configurando el acceso maestro para el administrador <span className="text-blue-600 font-bold">{formData.username}</span>...
             </p>
           </div>
-          
         </div>
       </div>
     );
   }
 
-  // Vista estándar del formulario completo
   return (
-    <div className="flex items-start justify-center w-full min-h-screen pt-4 md:pt-8 bg-slate-50 overflow-y-auto pb-10">
-      <div className="w-full max-w-[700px] bg-white px-6 py-8 md:px-12 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/40 flex flex-col border border-white">
+    // Ajustado padding vertical (pt-2 md:pt-4) para empujar la tarjeta hacia arriba
+    <div className="flex items-start justify-center w-full min-h-screen pt-2 md:pt-4 bg-slate-50 overflow-y-auto pb-6">
+      
+      {/* CAMBIADO: max-w-[700px] -> max-w-5xl (Aumenta el ancho horizontal drásticamente) */}
+      <div className="w-full max-w-5xl bg-white px-8 py-6 md:px-12 md:py-8 rounded-[2.5rem] shadow-2xl shadow-blue-200/40 flex flex-col border border-white">
         
-        <div className="text-center mb-6">
+        {/* Cabecera compactada */}
+        <div className="text-center mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-blue-600 tracking-tight">CleanManager</h1>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Registro de Nueva Empresa</p>
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">Registro de Nueva Empresa</p>
         </div>
 
-        <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-6 gap-x-4 gap-y-3 text-left">
+        {/* Formulario con gaps verticales reducidos (gap-y-2) para evitar scroll */}
+        <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-6 gap-x-6 gap-y-2 text-left">
           
-          <div className="md:col-span-6 space-y-1">
+          <div className="md:col-span-6 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre de la Empresa *</label>
             <Input 
               name="nombre"
@@ -163,7 +162,7 @@ const Register = () => {
             <ErrorMsg name="nombre" />
           </div>
 
-          <div className="md:col-span-3 space-y-1">
+          <div className="md:col-span-3 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CIF / NIF *</label>
             <Input 
               name="cif"
@@ -175,7 +174,7 @@ const Register = () => {
             <ErrorMsg name="cif" />
           </div>
 
-          <div className="md:col-span-3 space-y-1">
+          <div className="md:col-span-3 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Teléfono *</label>
             <Input 
               name="telefono"
@@ -187,7 +186,7 @@ const Register = () => {
             <ErrorMsg name="telefono" />
           </div>
 
-          <div className="md:col-span-4 space-y-1">
+          <div className="md:col-span-4 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Dirección Física *</label>
             <Input 
               name="direccion"
@@ -199,7 +198,7 @@ const Register = () => {
             <ErrorMsg name="direccion" />
           </div>
 
-          <div className="md:col-span-2 space-y-1">
+          <div className="md:col-span-2 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">CP *</label>
             <Input 
               name="codigoPostal"
@@ -211,7 +210,7 @@ const Register = () => {
             <ErrorMsg name="codigoPostal" />
           </div>
 
-          <div className="md:col-span-3 space-y-1">
+          <div className="md:col-span-3 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Municipio *</label>
             <Input 
               name="municipio"
@@ -223,7 +222,7 @@ const Register = () => {
             <ErrorMsg name="municipio" />
           </div>
 
-          <div className="md:col-span-3 space-y-1">
+          <div className="md:col-span-3 space-y-0.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Provincia *</label>
             <Input 
               name="provincia"
@@ -235,55 +234,75 @@ const Register = () => {
             <ErrorMsg name="provincia" />
           </div>
 
-          <div className="md:col-span-6 border-t border-slate-100 pt-5 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-blue-400 uppercase ml-1">Email de Acceso *</label>
-              <Input 
-                name="email"
-                type="email" 
-                className={`rounded-xl bg-blue-50/30 border-none h-10 px-4 text-sm transition-all ${errors.email ? 'ring-1 ring-red-500' : ''}`}
-                value={formData.email} 
-                onChange={handleChange}
-                onBlur={() => validateField('email', formData.email)}
-              />
-              <ErrorMsg name="email" />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-blue-400 uppercase ml-1">Contraseña *</label>
-              <div className="relative w-full flex items-center">
-                <input 
-                  name="password"
-                  type={showPassword ? "text" : "password"} 
-                  className={`w-full rounded-xl bg-blue-50/30 border-none h-10 pl-4 pr-12 text-sm transition-all text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.password ? 'ring-1 ring-red-500' : ''}`}
-                  value={formData.password} 
+          {/* Bloque de accesos optimizado y unificado en rejilla de 3 columnas para ahorrar espacio */}
+          <div className="md:col-span-6 border-t border-slate-100 pt-4 mt-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              <div className="space-y-0.5">
+                <label className="text-[10px] font-bold text-blue-600 uppercase ml-1">Correo Electrónico *</label>
+                <Input 
+                  name="email"
+                  type="email" 
+                  placeholder="admin@empresa.com"
+                  className={`rounded-xl bg-blue-50/30 border-none h-10 px-4 text-sm transition-all ${errors.email ? 'ring-1 ring-red-500' : ''}`}
+                  value={formData.email} 
                   onChange={handleChange}
-                  onBlur={() => validateField('password', formData.password)}
-                  placeholder="••••••••"
-                  required
+                  onBlur={() => validateField('email', formData.email)}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 text-slate-400 hover:text-blue-600 transition-colors focus:outline-none flex items-center justify-center"
-                  style={{ background: 'none', border: 'none', padding: 0 }}
-                >
-                  {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                </button>
+                <ErrorMsg name="email" />
               </div>
-              <ErrorMsg name="password" />
+
+              <div className="space-y-0.5">
+                <label className="text-[10px] font-bold text-blue-600 uppercase ml-1">Usuario de Acceso *</label>
+                <Input 
+                  name="username"
+                  type="text" 
+                  placeholder="ej: admin_jerez"
+                  className={`rounded-xl bg-blue-50/30 border-none h-10 px-4 text-sm transition-all ${errors.username ? 'ring-1 ring-red-500' : ''}`}
+                  value={formData.username} 
+                  onChange={handleChange}
+                  onBlur={() => validateField('username', formData.username)}
+                />
+                <ErrorMsg name="username" />
+              </div>
+
+              <div className="space-y-0.5">
+                <label className="text-[10px] font-bold text-blue-600 uppercase ml-1">Contraseña *</label>
+                <div className="relative w-full flex items-center">
+                  <input 
+                    name="password"
+                    type={showPassword ? "text" : "password"} 
+                    className={`w-full rounded-xl bg-blue-50/30 border-none h-10 pl-4 pr-12 text-sm transition-all text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.password ? 'ring-1 ring-red-500' : ''}`}
+                    value={formData.password} 
+                    onChange={handleChange}
+                    onBlur={() => validateField('password', formData.password)}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-blue-600 transition-colors focus:outline-none flex items-center justify-center"
+                    style={{ background: 'none', border: 'none', padding: 0 }}
+                  >
+                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
+                <ErrorMsg name="password" />
+              </div>
+
             </div>
           </div>
 
           <Button 
             type="submit" 
             disabled={loading} 
-            className="md:col-span-6 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-2xl mt-4 shadow-lg shadow-blue-200 transition-all active:scale-95"
+            className="md:col-span-6 bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-2xl mt-3 shadow-lg shadow-blue-200 transition-all active:scale-95"
           >
             {loading ? "Creando empresa..." : "Finalizar Registro"}
           </Button>
 
-          <div className="md:col-span-6 text-center pt-2">
+          <div className="md:col-span-6 text-center pt-1">
             <Link to="/login" className="text-[11px] font-bold text-blue-500 hover:text-blue-700 uppercase tracking-tight">
               ¿Ya tienes cuenta? Inicia sesión
             </Link>

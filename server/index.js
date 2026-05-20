@@ -28,7 +28,7 @@ db.connect((err) => {
 });
 
 // ==========================================
-// RUTA: REGISTRO DE NUEVA EMPRESA
+// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO ADMIN (ACTUALIZADO 🚀)
 // ==========================================
 app.post('/api/register', async (req, res) => {
   const { 
@@ -39,46 +39,152 @@ app.post('/api/register', async (req, res) => {
     codigo_postal, 
     municipio, 
     provincia, 
-    email_acceso, 
-    password 
+    email,     // El correo de la empresa / contacto
+    username,  // El nombre de usuario único para el login
+    password   // Contraseña a encriptar
   } = req.body;
 
-  if (!nombre_tintoreria || !cif || !email_acceso || !password) {
+  // Validación de campos requeridos
+  if (!nombre_tintoreria || !cif || !username || !password) {
     return res.status(400).json({ message: "Faltan campos obligatorios para procesar el registro" });
   }
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+  // Iniciamos una transacción atómica para asegurar la inserción en ambas tablas
+  db.beginTransaction(async (transactionErr) => {
+    if (transactionErr) {
+      console.error("❌ Error al iniciar transacción de registro:", transactionErr);
+      return res.status(500).json({ message: "Error interno en el servidor local." });
+    }
 
-    const sql = `
-      INSERT INTO empresa 
-      (nombre_tintoreria, cif, direccion, telefono_fijo, codigo_postal, municipio, provincia, email_acceso, password) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+    try {
+      // 1. Encriptamos la contraseña con bcrypt
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
 
-    db.query(
-      sql, 
-      [nombre_tintoreria, cif, direccion, telefono_fijo, codigo_postal, municipio, provincia, email_acceso, hashedPassword], 
-      (err, result) => {
-        if (err) {
-          console.error("❌ Error en la query de inserción:", err);
-          
-          if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ message: "El CIF o el Email de acceso ya se encuentran registrados." });
+      // 2. Query para guardar los datos de la Empresa
+      const sqlEmpresa = `
+        INSERT INTO empresa 
+        (nombre_tintoreria, cif, direccion, telefono_fijo, codigo_postal, municipio, provincia) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      db.query(
+        sqlEmpresa, 
+        [nombre_tintoreria, cif, direccion, telefono_fijo, codigo_postal, municipio, provincia], 
+        (err, resultEmpresa) => {
+          if (err) {
+            return db.rollback(() => {
+              console.error("❌ Error al insertar datos fiscales de la empresa:", err);
+              if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ message: "El CIF de la empresa ya se encuentra registrado." });
+              }
+              return res.status(500).json({ message: "Error al guardar los datos de la empresa." });
+            });
           }
-          return res.status(500).json({ message: "Error interno al guardar los datos en MySQL." });
+
+          // Recuperamos el ID autogenerado de la empresa recién creada
+          const nuevoIdEmpresa = resultEmpresa.insertId;
+
+          // 3. Query para guardar las credenciales del Administrador en la tabla usuario
+          const sqlUsuario = `
+            INSERT INTO usuario (id_empresa, username, password, email, rol) 
+            VALUES (?, ?, ?, ?, 'admin')
+          `;
+
+          db.query(
+            sqlUsuario,
+            [nuevoIdEmpresa, username, hashedPassword, email],
+            (err, resultUsuario) => {
+              if (err) {
+                return db.rollback(() => {
+                  console.error("❌ Error al insertar credenciales del usuario admin:", err);
+                  if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(400).json({ message: "El nombre de usuario de acceso ya está cogido por otra empresa." });
+                  }
+                  return res.status(500).json({ message: "Error al configurar el usuario administrador." });
+                });
+              }
+
+              // Si todo ha ido de lujo en ambas tablas, consolidamos los datos en MySQL
+              db.commit((commitErr) => {
+                if (commitErr) {
+                  return db.rollback(() => {
+                    console.error("❌ Error en commit de registro:", commitErr);
+                    return res.status(500).json({ message: "Error al confirmar el alta de la empresa." });
+                  });
+                }
+                
+                console.log(`✅ Empresa #${nuevoIdEmpresa} y Admin '${username}' dados de alta con éxito.`);
+                return res.status(201).json({ message: "Empresa y usuario administrador registrados con éxito." });
+              });
+            }
+          );
         }
+      );
 
-        console.log(`✅ Empresa registrada correctamente. ID asignado: ${result.insertId}`);
-        return res.status(201).json({ message: "Empresa registrada correctamente en MySQL Workbench." });
-      }
-    );
+    } catch (error) {
+      db.rollback(() => {
+        console.error("❌ Error inesperado en proceso de registro:", error);
+        return res.status(500).json({ message: "Error inesperado en el servidor." });
+      });
+    }
+  });
+});
 
-  } catch (error) {
-    console.error("❌ Error en el proceso del servidor:", error);
-    return res.status(500).json({ message: "Error unexpected en el servidor." });
+// ==========================================
+// RUTA: NUEVO ENDPOINT DE INICIO DE SESIÓN (AUTENTICACIÓN INTELIGENTE POR ROLES 🔑)
+// ==========================================
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
   }
+
+  // Buscamos el usuario y hacemos JOIN con empresa para sacar el nombre comercial y el id_empresa
+  const sql = `
+    SELECT u.id_usuario, u.id_empresa, u.username, u.password, u.rol, e.nombre_tintoreria 
+    FROM usuario u
+    INNER JOIN empresa e ON u.id_empresa = e.id_empresa
+    WHERE u.username = ?
+  `;
+
+  db.query(sql, [username], async (err, results) => {
+    if (err) {
+      console.error("❌ Error en query de Login:", err);
+      return res.status(500).json({ message: "Error interno al conectar con el servidor de base de datos." });
+    }
+
+    if (results.length === 0) {
+      return res.status(401).json({ message: "El usuario o la contraseña son incorrectos." });
+    }
+
+    const user = results[0];
+
+    try {
+      // Comparamos el texto plano del formulario con el hash guardado en MySQL
+      const match = await bcrypt.compare(password, user.password);
+      
+      if (!match) {
+        return res.status(401).json({ message: "El usuario o la contraseña son incorrectos." });
+      }
+
+      console.log(`🔑 Login exitoso: '${user.username}' accedió con rol: [${user.rol}]`);
+
+      // Devolvemos el objeto limpio que React espera para gestionar las vistas y rutas privadas
+      return res.json({
+        id_usuario: user.id_usuario,
+        id_empresa: user.id_empresa,
+        username: user.username,
+        rol: user.rol, // 'admin' o 'empleado'
+        nombre_tintoreria: user.nombre_tintoreria
+      });
+
+    } catch (bcryptError) {
+      console.error("❌ Error al comparar hashes con bcrypt:", bcryptError);
+      return res.status(500).json({ message: "Error al validar la firma de la contraseña." });
+    }
+  });
 });
 
 // ==========================================
@@ -107,7 +213,7 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
       pedidosHoy: results[0].pedidosHoy || 0,
       enProceso: results[0].enProceso || 0,
       listosEntrega: results[0].listosEntrega || 0,
-      ingresosMes: Number(results[0].ingresosMes) || 0
+       ingresosMes: Number(results[0].ingresosMes) || 0
     });
   });
 });
@@ -181,7 +287,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
       return res.status(500).json({ message: "Error interno en el servidor." });
     }
 
-    // 1. Actualizamos el estado del pedido en la tabla maestra
     const sqlUpdatePedido = `UPDATE pedido SET estado = ? WHERE id_pedido = ?`;
     db.query(sqlUpdatePedido, [estado, id_pedido], (err, result) => {
       if (err) {
@@ -191,7 +296,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
         });
       }
 
-      // Si no pasa a estar entregado, cerramos la transacción guardando el taller
       if (estado !== 'ENTREGADO') {
         return db.commit((err) => {
           if (err) {
@@ -202,7 +306,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
         });
       }
 
-      // 2. Si pasa a 'ENTREGADO', generamos el documento fiscal
       const sqlCheckFactura = `SELECT id_factura FROM factura WHERE id_pedido = ?`;
       db.query(sqlCheckFactura, [id_pedido], (err, facturaRows) => {
         if (err) {
@@ -217,7 +320,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
           });
         }
 
-        // 3. Obtenemos datos económicos del ticket y calculamos el consecutivo anual correlativo
         const sqlGetData = `
           SELECT total, id_empresa, YEAR(CURDATE()) as anio_actual 
           FROM pedido WHERE id_pedido = ?
@@ -231,6 +333,7 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 
           const sqlLastNum = `
             SELECT num_factura FROM factura 
+            WHERE id_empresa = ? AND num_factura LIKE ? 
             WHERE id_empresa = ? AND num_factura LIKE ? 
             ORDER BY id_factura DESC LIMIT 1
           `;
@@ -247,12 +350,10 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 
             const numFacturaFormateado = `FS-${anio_actual}-${String(nuevoContador).padStart(6, '0')}`;
 
-            // DESGLOSE OBLIGATORIO DE IMPUESTOS (IVA ESPAÑA 21%)
             const totalFacturado = Number(total);
             const baseImponible = totalFacturado / 1.21;
             const importeIva = totalFacturado - baseImponible;
 
-            // 4. Guardamos el registro definitivo en la tabla factura
             const sqlInsertFactura = `
               INSERT INTO factura (id_pedido, id_empresa, num_factura, base_imponible, importe_iva, total_facturado, metodo_pago)
               VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO')
@@ -426,7 +527,6 @@ app.post('/api/prendas', (req, res) => {
 app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
-  // Query 1: Pedidos listos para entrega inmediata (ACABADO)
   const sqlPendientes = `
     SELECT id_pedido, cliente, prenda, servicio, total, estado 
     FROM pedido 
@@ -434,7 +534,6 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     ORDER BY id_pedido DESC
   `;
 
-  // Query 2: Sumatorios para el gráfico de métodos de pago de las facturas cobradas HOY
   const sqlMetodos = `
     SELECT metodo_pago, COALESCE(SUM(total_facturado), 0) as total
     FROM factura
@@ -448,7 +547,6 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     db.query(sqlMetodos, [id_empresa], (err, metodosRows) => {
       if (err) return res.status(500).json({ message: "Error en servidor." });
 
-      // Estructuramos los datos para el gráfico de caja
       const graficoCaja = { EFECTIVO: 0, TARJETA: 0, BIZUM: 0 };
       metodosRows.forEach(row => {
         if (graficoCaja[row.metodo_pago] !== undefined) {

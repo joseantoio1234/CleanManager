@@ -14,8 +14,8 @@ interface OrderData {
 }
 
 export const authRepository = {
-  // Registro de nueva empresa enviando los datos a nuestro Backend local
-  signUp: async (email: string, password: string, companyData: any) => {
+  // Registro de nueva empresa + primer usuario administrador en la base de datos relacional
+  signUp: async (username: string, password: string, companyData: any) => {
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
@@ -30,8 +30,9 @@ export const authRepository = {
           codigo_postal: companyData.codigo_postal,
           municipio: companyData.municipio,
           provincia: companyData.provincia,
-          email_acceso: email,
-          password: password // El servidor se encargará de encriptarla
+          email: companyData.email, // El correo de contacto corporativo de la empresa
+          username: username,       // El alias corto para el login del dueño
+          password: password        // Se enviará seguro para encriptarse con bcrypt en el servidor
         }),
       });
 
@@ -48,17 +49,35 @@ export const authRepository = {
     }
   },
 
-  // Preparado para el futuro Login
-  signIn: async (email: string, password: string) => {
-    // Aquí haremos el fetch a /api/login más adelante
-    console.log("Login con MySQL pendiente de implementar");
+  // Inicio de sesión cruzado e inteligente (Mapeado para la tabla 'usuario')
+  signIn: async (username: string, password: string) => {
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Usuario o contraseña incorrectos.');
+      }
+
+      // Devuelve los datos de sesión: id_usuario, id_empresa, username, rol, nombre_tintoreria
+      return data; 
+    } catch (error: any) {
+      console.error("Error en authRepository (signIn):", error);
+      throw error;
+    }
   },
 
-  // Añadido para que NavbarPrivate funcione correctamente sin errores de compilación
+  // Cierre de sesión de la aplicación
   signOut: async () => {
     try {
-      // Como estamos trabajando de forma local y temporal, de momento
-      // solo simulamos el cierre de sesión limpiando consola o estados futuros
+      // Al trabajar con sesiones locales de momento, limpiamos el entorno
       console.log("Sesión cerrada localmente en MySQL");
       return { success: true };
     } catch (error) {
@@ -68,7 +87,7 @@ export const authRepository = {
   },
 
   // ==========================================
-  // NUEVO: CREAR PEDIDO EN LA BASE DE DATOS
+  // CREAR PEDIDO EN LA BASE DE DATOS
   // ==========================================
   createOrder: async (orderData: OrderData) => {
     try {
