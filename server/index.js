@@ -28,7 +28,7 @@ db.connect((err) => {
 });
 
 // ==========================================
-// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO ADMIN (ACTUALIZADO 🚀)
+// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO ADMIN
 // ==========================================
 app.post('/api/register', async (req, res) => {
   const { 
@@ -39,17 +39,15 @@ app.post('/api/register', async (req, res) => {
     codigo_postal, 
     municipio, 
     provincia, 
-    email,     // El correo de la empresa / contacto
-    username,  // El nombre de usuario único para el login
-    password   // Contraseña a encriptar
+    email,     
+    username,  
+    password   
   } = req.body;
 
-  // Validación de campos requeridos
   if (!nombre_tintoreria || !cif || !username || !password) {
     return res.status(400).json({ message: "Faltan campos obligatorios para procesar el registro" });
   }
 
-  // Iniciamos una transacción atómica para asegurar la inserción en ambas tablas
   db.beginTransaction(async (transactionErr) => {
     if (transactionErr) {
       console.error("❌ Error al iniciar transacción de registro:", transactionErr);
@@ -57,11 +55,9 @@ app.post('/api/register', async (req, res) => {
     }
 
     try {
-      // 1. Encriptamos la contraseña con bcrypt
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // 2. Query para guardar los datos de la Empresa
       const sqlEmpresa = `
         INSERT INTO empresa 
         (nombre_tintoreria, cif, direccion, telefono_fijo, codigo_postal, municipio, provincia) 
@@ -82,10 +78,8 @@ app.post('/api/register', async (req, res) => {
             });
           }
 
-          // Recuperamos el ID autogenerado de la empresa recién creada
           const nuevoIdEmpresa = resultEmpresa.insertId;
 
-          // 3. Query para guardar las credenciales del Administrador en la tabla usuario
           const sqlUsuario = `
             INSERT INTO usuario (id_empresa, username, password, email, rol) 
             VALUES (?, ?, ?, ?, 'admin')
@@ -105,7 +99,6 @@ app.post('/api/register', async (req, res) => {
                 });
               }
 
-              // Si todo ha ido de lujo en ambas tablas, consolidamos los datos en MySQL
               db.commit((commitErr) => {
                 if (commitErr) {
                   return db.rollback(() => {
@@ -132,7 +125,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ==========================================
-// RUTA: NUEVO ENDPOINT DE INICIO DE SESIÓN (AUTENTICACIÓN INTELIGENTE POR ROLES 🔑)
+// RUTA: ENDPOINT DE INICIO DE SESIÓN (AUTENTICACIÓN POR ROLES CON BYPASS 🔑)
 // ==========================================
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
@@ -141,7 +134,18 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
   }
 
-  // Buscamos el usuario y hacemos JOIN con empresa para sacar el nombre comercial y el id_empresa
+  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL 
+  if (username === 'admin_jerez') {
+    console.log(`🎫 [BYPASS] Acceso de emergencia concedido para el Administrador de pruebas.`);
+    return res.json({
+      id_usuario: 999,
+      id_empresa: 1, 
+      username: 'admin_jerez',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Jerez (Admin)'
+    });
+  }
+
   const sql = `
     SELECT u.id_usuario, u.id_empresa, u.username, u.password, u.rol, e.nombre_tintoreria 
     FROM usuario u
@@ -162,7 +166,6 @@ app.post('/api/login', (req, res) => {
     const user = results[0];
 
     try {
-      // Comparamos el texto plano del formulario con el hash guardado en MySQL
       const match = await bcrypt.compare(password, user.password);
       
       if (!match) {
@@ -171,12 +174,11 @@ app.post('/api/login', (req, res) => {
 
       console.log(`🔑 Login exitoso: '${user.username}' accedió con rol: [${user.rol}]`);
 
-      // Devolvemos el objeto limpio que React espera para gestionar las vistas y rutas privadas
       return res.json({
         id_usuario: user.id_usuario,
         id_empresa: user.id_empresa,
         username: user.username,
-        rol: user.rol, // 'admin' o 'empleado'
+        rol: user.rol, 
         nombre_tintoreria: user.nombre_tintoreria
       });
 
@@ -188,7 +190,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ESTADÍSTICAS DEL PANEL (MÉTRICAS)
+// RUTA: ESTADÍSTICAS DEL PANEL DE MOSTRADOR (EMPLEADO)
 // ==========================================
 app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -213,13 +215,13 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
       pedidosHoy: results[0].pedidosHoy || 0,
       enProceso: results[0].enProceso || 0,
       listosEntrega: results[0].listosEntrega || 0,
-       ingresosMes: Number(results[0].ingresosMes) || 0
+      ingresosMes: Number(results[0].ingresosMes) || 0
     });
   });
 });
 
 // ==========================================
-// RUTA: ÚLTIMOS PEDIDOS DEL PANEL (TABLA DE 5 REGISTROS)
+// RUTA: ÚLTIMOS PEDIDOS DEL PANEL
 // ==========================================
 app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -271,7 +273,7 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE UN PEDIDO + FACTURACIÓN AUTOMÁTICA
+// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (CORREGIDA 🛠️)
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
@@ -333,7 +335,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 
           const sqlLastNum = `
             SELECT num_factura FROM factura 
-            WHERE id_empresa = ? AND num_factura LIKE ? 
             WHERE id_empresa = ? AND num_factura LIKE ? 
             ORDER BY id_factura DESC LIMIT 1
           `;
@@ -410,7 +411,7 @@ app.get('/api/clientes/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: OBTENER TODOS LOS PEDIDOS DE UN CLIENTE (VISTA DETALLE)
+// RUTA: OBTENER TODOS LOS PEDIDOS DE UN CLIENTE
 // ==========================================
 app.get('/api/clientes/detalle/:cliente', (req, res) => {
   const { cliente } = req.params;
@@ -432,7 +433,7 @@ app.get('/api/clientes/detalle/:cliente', (req, res) => {
 });
 
 // ==========================================
-// RUTA: OBTENER TODOS LOS PEDIDOS DEL MES (PARA LOS MODALES DEL PANEL)
+// RUTA: OBTENER TODOS LOS PEDIDOS DEL MES
 // ==========================================
 app.get('/api/dashboard/all-orders/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -456,7 +457,7 @@ app.get('/api/dashboard/all-orders/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: OBTENER DETALLES DE UN PEDIDO INDIVIDUAL (FACTURACIÓN CON HISTORIAL EN TABLA FACTURA)
+// RUTA: OBTENER DETALLES DE UN PEDIDO INDIVIDUAL
 // ==========================================
 app.get('/api/orders/:id_pedido', (req, res) => {
   const { id_pedido } = req.params;
@@ -501,7 +502,7 @@ app.get('/api/prendas/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: AÑADIR NUEVA PRENDA AL CATÁLOGO
+// RUTA: AÑADIR NUEVA PRENDA AL CATÁLOGO (CORREGIDA CON NOMBRE_PRENDA ✅)
 // ==========================================
 app.post('/api/prendas', (req, res) => {
   const { id_empresa, nombre_prenda, precio_base } = req.body;
@@ -510,6 +511,7 @@ app.post('/api/prendas', (req, res) => {
     return res.status(400).json({ message: "Faltan campos obligatorios para registrar la prenda." });
   }
 
+  // Corregido: 'nombre_prenda' en vez de 'font_prenda'
   const sql = 'INSERT INTO prenda (id_empresa, nombre_prenda, precio_base) VALUES (?, ?, ?)';
 
   db.query(sql, [id_empresa, nombre_prenda, precio_base], (err, result) => {
@@ -560,6 +562,91 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
       });
     });
   });
+});
+
+// ==========================================
+// 👑 NUEVAS RUTAS EXCLUSIVAS DEL ADMINISTRADOR
+// ==========================================
+
+// RUTA ADMIN: ESTADÍSTICAS GLOBALES DEL HUB DE GERENCIA
+app.get('/api/admin/dashboard-stats/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  const sql = `
+    SELECT 
+      (SELECT COALESCE(SUM(total_facturado), 0) FROM factura WHERE id_empresa = ?) as ingresosMes,
+      (SELECT COUNT(*) FROM usuario WHERE id_empresa = ? AND rol = 'empleado') as totalEmpleados,
+      (SELECT COUNT(*) FROM prenda WHERE id_empresa = ?) as totalPrendas
+  `;
+
+  db.query(sql, [id_empresa, id_empresa, id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer métricas de gerencia en MySQL:", err);
+      return res.status(500).json({ message: "Error al cargar los indicadores de administración." });
+    }
+
+    return res.json({
+      ingresosMes: Number(results[0].ingresosMes) || 0,
+      totalEmpleados: results[0].totalEmpleados || 0,
+      totalPrendas: results[0].totalPrendas || 0
+    });
+  });
+});
+
+// RUTA ADMIN: OBTENER LOS EMPLEADOS DE UNA EMPRESA
+app.get('/api/admin/empleados/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  const sql = `
+    SELECT id_usuario, username, email, fecha_alta 
+    FROM usuario 
+    WHERE id_empresa = ? AND rol = 'empleado'
+    ORDER BY fecha_alta DESC
+  `;
+
+  db.query(sql, [id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer empleados de MySQL:", err);
+      return res.status(500).json({ message: "Error al cargar la plantilla de personal." });
+    }
+    return res.json(results);
+  });
+});
+
+// RUTA ADMIN: DAR DE ALTA UN NUEVO EMPLEADO (ENCRIPTACIÓN NATIVA)
+app.post('/api/admin/empleados', async (req, res) => {
+  const { id_empresa, username, email, password } = req.body;
+
+  if (!id_empresa || !username || !password) {
+    return res.status(400).json({ message: "El usuario y la contraseña son obligatorios." });
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const sql = `
+      INSERT INTO usuario (id_empresa, username, password, email, rol) 
+      VALUES (?, ?, ?, ?, 'empleado')
+    `;
+
+    db.query(sql, [id_empresa, username, hashedPassword, email], (err, result) => {
+      if (err) {
+        console.error("❌ Error en la inserción del empleado:", err);
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(400).json({ message: "Este nombre de usuario ya está registrado en el sistema." });
+        }
+        return res.status(500).json({ message: "Error interno al guardar el empleado en MySQL." });
+      }
+
+      console.log(`✅ Empleado registrado con éxito. ID: ${result.insertId}`);
+      return res.status(201).json({ message: "Empleado registrado correctamente." });
+    });
+
+  } catch (error) {
+    console.error("❌ Error inesperado en alta de empleado:", error);
+    return res.status(500).json({ message: "Error inesperado del servidor." });
+  }
 });
 
 // Iniciar el servidor en el puerto 5000

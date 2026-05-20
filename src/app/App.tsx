@@ -9,20 +9,25 @@ import Clientes from '../pages/Clientes';
 import DetalleCliente from '../pages/DetalleCliente';
 import Factura from '../pages/Factura';
 import Inicio from '../pages/Inicio';
-import Prendas from '../pages/Prendas';
-import NuevaPrenda from '../components/forms/NuevaPrenda';
-import Cobros from '../pages/Cobros'; // Importamos la nueva vista de caja y gráfico de cobros
+import Cobros from '../pages/Cobros'; 
+
+// ==========================================
+// 👑 IMPORTACIONES DE LA NUEVA CARPETA ADMIN
+// ==========================================
+import InicioAdmin from '../pages/admin/InicioAdmin';
+import TarifasAdmin from '../pages/admin/TarifasAdmin';
+import EmpleadosAdmin from '../pages/admin/EmpleadosAdmin';
+
 import { Navbar } from '../components/common/Navbar';
 import { NavbarPrivate } from '../components/common/NavbarPrivate';
 import { Footer } from '../components/common/Footer';
 
 import '../styles/index.css';
-import InicioAdmin from '../pages/InicioAdmin';
 
 function AppContent() {
   const location = useLocation();
 
-  // Sincronizamos todas las rutas de gestión incluyendo el maestro de caja operativo
+  // Sincronizamos todas las rutas privadas de administración y mostrador
   const isPrivateRoute = [
     '/inicio',
     '/inicio-admin',
@@ -31,9 +36,9 @@ function AppContent() {
     '/perfil',
     '/clientes',
     '/prendas',
-    '/cobros' // Añadido para heredar el Navbar privado del mostrador
+    '/admin-empleados', // Asegura el Navbar privado en la sección de personal
+    '/cobros' 
   ].includes(location.pathname) ||
-    location.pathname.startsWith('/prendas/nueva') ||
     location.pathname.startsWith('/clientes/detalle/') ||
     location.pathname.startsWith('/factura/');
 
@@ -65,7 +70,7 @@ function AppContent() {
           {/* ==========================================
               RUTAS DE GESTIÓN (PRIVADAS)
              ========================================== */}
-          {/* Ruta de Inicio / Hub Central */}
+          {/* Ruta de Inicio / Hub Central del Empleado */}
           <Route path="/inicio" element={
             <div className="py-10">
               <Inicio />
@@ -108,28 +113,34 @@ function AppContent() {
             </div>
           } />
 
-          <Route path="/prendas" element={
-            <div className="py-10">
-              <Prendas />
-            </div>
-          } />
-
-          <Route path="/prendas/nueva" element={
-            <div className="py-10">
-              <NuevaPrenda />
-            </div>
-          } />
-
-          {/* Nueva ruta añadida para el módulo operativo de Caja y Cobros */}
+          {/* Módulo operativo de Caja y Cobros */}
           <Route path="/cobros" element={
             <div className="py-10">
               <Cobros />
             </div>
           } />
 
+          {/* ==========================================
+              👑 ENRUTADO DE MÓDULOS ADMINISTRATIVOS
+             ========================================== */}
+          {/* HUB o Panel Principal de Gerencia */}
           <Route path="/inicio-admin" element={
             <div className="py-10">
               <InicioAdmin />
+            </div>
+          } />
+
+          {/* Gestión de Catálogo de Tarifas */}
+          <Route path="/prendas" element={
+            <div className="py-10">
+              <TarifasAdmin />
+            </div>
+          } />
+
+          {/* Alta y Control de Cuentas de Personal */}
+          <Route path="/admin-empleados" element={
+            <div className="py-10">
+              <EmpleadosAdmin />
             </div>
           } />
 
