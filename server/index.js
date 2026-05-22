@@ -28,7 +28,7 @@ db.connect((err) => {
 });
 
 // ==========================================
-// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO OPERARIO DIRECTO 🚀
+// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO DINÁMICO (SaaS AISLADO 👑)
 // ==========================================
 app.post('/api/register', async (req, res) => {
   const { 
@@ -41,7 +41,8 @@ app.post('/api/register', async (req, res) => {
     provincia, 
     email,     
     username,  
-    password   
+    password,
+    rol // Recibe 'admin' o 'empleado' dinámicamente desde el frontend
   } = req.body;
 
   if (!nombre_tintoreria || !cif || !username || !password) {
@@ -80,19 +81,22 @@ app.post('/api/register', async (req, res) => {
 
           const nuevoIdEmpresa = resultEmpresa.insertId;
 
-          // Configurado por petición del diseño para otorgar rol 'empleado' nativo en la landing
+          // El rol pasa a ser dinámico (?) para admitir administradores independientes
           const sqlUsuario = `
             INSERT INTO usuario (id_empresa, username, password, email, rol) 
-            VALUES (?, ?, ?, ?, 'empleado')
+            VALUES (?, ?, ?, ?, ?)
           `;
+
+          // Por defecto, si el registro viene de la landing sin especificar rol, se le asigna 'admin'
+          const rolFinal = rol || 'admin';
 
           db.query(
             sqlUsuario,
-            [nuevoIdEmpresa, username, hashedPassword, email],
+            [nuevoIdEmpresa, username, hashedPassword, email, rolFinal],
             (err, resultUsuario) => {
               if (err) {
                 return db.rollback(() => {
-                  console.error("❌ Error al insertar credenciales del usuario :", err);
+                  console.error("❌ Error al insertar credenciales del usuario:", err);
                   if (err.code === 'ER_DUP_ENTRY') {
                     return res.status(400).json({ message: "El nombre de usuario de acceso ya está cogido por otra empresa." });
                   }
@@ -108,8 +112,8 @@ app.post('/api/register', async (req, res) => {
                   });
                 }
                 
-                console.log(`✅ Empresa #${nuevoIdEmpresa} y Empleado '${username}' dados de alta con éxito.`);
-                return res.status(201).json({ message: "Empresa y usuario registrados con éxito." });
+                console.log(`✅ Empresa #${nuevoIdEmpresa} registrada con éxito. Cuenta de acceso: '${username}' [${rolFinal}].`);
+                return res.status(201).json({ message: "Empresa y cuenta de usuario dadas de alta con éxito." });
               });
             }
           );
@@ -135,15 +139,27 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
   }
 
-  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL 
+  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA JEREZ)
   if (username === 'admin_jerez') {
-    console.log(`🎫 [BYPASS] Acceso de emergencia concedido para el Administrador de pruebas.`);
+    console.log(`🎫 [BYPASS] Acceso de emergencia concedido para el Administrador de Jerez.`);
     return res.json({
       id_usuario: 999,
       id_empresa: 1, 
       username: 'admin_jerez',
       rol: 'admin', 
       nombre_tintoreria: 'Tintorería Jerez (Admin)'
+    });
+  }
+
+  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA MÉRIDA - ID: 6)
+  if (username === 'admin_merida') {
+    console.log(`🎫 [BYPASS] Acceso de emergencia concedido para el Administrador de Mérida.`);
+    return res.json({
+      id_usuario: 888,
+      id_empresa: 6, 
+      username: 'admin_merida',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Mérida (Admin)'
     });
   }
 
@@ -586,6 +602,7 @@ app.get('/api/admin/dashboard-stats/:id_empresa', (req, res) => {
     }
 
     return res.json({
+      id_empresa,
       ingresosMes: Number(results[0].ingresosMes) || 0,
       totalEmpleados: results[0].totalEmpleados || 0,
       totalPrendas: results[0].totalPrendas || 0
