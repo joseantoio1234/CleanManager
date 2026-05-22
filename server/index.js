@@ -28,7 +28,7 @@ db.connect((err) => {
 });
 
 // ==========================================
-// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO ADMIN
+// RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO OPERARIO DIRECTO 🚀
 // ==========================================
 app.post('/api/register', async (req, res) => {
   const { 
@@ -80,6 +80,7 @@ app.post('/api/register', async (req, res) => {
 
           const nuevoIdEmpresa = resultEmpresa.insertId;
 
+          // Configurado por petición del diseño para otorgar rol 'empleado' nativo en la landing
           const sqlUsuario = `
             INSERT INTO usuario (id_empresa, username, password, email, rol) 
             VALUES (?, ?, ?, ?, 'empleado')
@@ -107,8 +108,8 @@ app.post('/api/register', async (req, res) => {
                   });
                 }
                 
-                console.log(`✅ Empresa #${nuevoIdEmpresa} y Admin '${username}' dados de alta con éxito.`);
-                return res.status(201).json({ message: "Empresa y usuario administrador registrados con éxito." });
+                console.log(`✅ Empresa #${nuevoIdEmpresa} y Empleado '${username}' dados de alta con éxito.`);
+                return res.status(201).json({ message: "Empresa y usuario registrados con éxito." });
               });
             }
           );
@@ -190,7 +191,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ESTADÍSTICAS DEL PANEL DE MOSTRADOR (EMPLEADO)
+// RUTA: ESTADÍSTICAS PROTEGIDAS DEL DASHBOARD (FILTRADO INALTERABLE 🔒)
 // ==========================================
 app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -221,7 +222,7 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ÚLTIMOS PEDIDOS DEL PANEL
+// RUTA: ÚLTIMOS PEDIDOS EXCLUSIVOS DE LA EMPRESA LOGUEADA
 // ==========================================
 app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -384,7 +385,7 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 });
 
 // ==========================================
-// RUTA: OBTENER LISTADO UNIFICADO DE CLIENTES
+// RUTA: OBTENER LISTADO UNIFICADO DE CLIENTES (FILTRADO POR EMPRESA 🔒)
 // ==========================================
 app.get('/api/clientes/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
@@ -648,7 +649,7 @@ app.post('/api/admin/empleados', async (req, res) => {
   }
 });
 
-// RUTA ADMIN: MODIFICAR DATOS DE UN EMPLEADO (SOPORTA CAMBIO OPCIONAL DE CLAVE 🛠️)
+// RUTA ADMIN: MODIFICAR DATOS DE UN EMPLEADO
 app.put('/api/admin/empleados/:id_usuario', async (req, res) => {
   const { id_usuario } = req.params;
   const { username, email, password } = req.body;

@@ -37,16 +37,17 @@ const Dashboard = () => {
     // Estado de control para saber qué modal se encuentra abierto
     const [activeModal, setActiveModal] = useState<'HOY' | 'PROCESO' | 'LISTOS' | 'INGRESOS' | null>(null);
 
-    const ID_EMPRESA = 1;
+    // 🚀 CORREGIDO: Leemos el ID real de la empresa del localStorage para evitar cruce de datos
+    const idEmpresa = localStorage.getItem('id_empresa') || '1';
 
-    // Función asíncrona para sincronizar todo el estado global con MySQL
+    // Función asíncrona para sincronizar todo el estado global con MySQL de forma aislada
     const cargarDatosDashboard = async () => {
         try {
             setLoading(true);
             const [resStats, resRecent, resAll] = await Promise.all([
-                fetch(`http://localhost:5000/api/dashboard/stats/${ID_EMPRESA}`),
-                fetch(`http://localhost:5000/api/dashboard/recent/${ID_EMPRESA}`),
-                fetch(`http://localhost:5000/api/dashboard/all-orders/${ID_EMPRESA}`)
+                fetch(`http://localhost:5000/api/dashboard/stats/${idEmpresa}`),
+                fetch(`http://localhost:5000/api/dashboard/recent/${idEmpresa}`),
+                fetch(`http://localhost:5000/api/dashboard/all-orders/${idEmpresa}`)
             ]);
 
             if (!resStats.ok || !resRecent.ok || !resAll.ok) {
@@ -82,7 +83,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         cargarDatosDashboard();
-    }, []);
+    }, [idEmpresa]);
 
     // Configuración visual para estilizar los badges del taller
     const getStatusStyles = (estado: string) => {
@@ -133,21 +134,21 @@ const Dashboard = () => {
             
             {/* Cabecera de Bienvenida con accesos unificados */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
+                <div className="text-left">
                     <h1 className="text-3xl font-bold text-slate-900">Panel de Control</h1>
-                    <p className="text-slate-500">Bienvenido de nuevo a la gestión de tu tintorería.</p>
+                    <p className="text-slate-500 text-sm">Bienvenido de nuevo a la gestión de tu tintorería.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    {/* NUEVO BOTÓN: Volver al menú de módulos (Inicio) */}
+                    {/* BOTÓN: Volver al menú de módulos (Inicio) */}
                     <button 
                         onClick={() => navigate('/inicio')}
-                        className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm"
+                        className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm shadow-sm"
                     >
                         <FiArrowLeft /> Menú Principal
                     </button>
                     {/* BOTÓN: Listado de Clientes */}
                     <Link to="/clientes">
-                        <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm">
+                        <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm shadow-sm">
                             Ver Clientes
                         </button>
                     </Link>
@@ -165,7 +166,7 @@ const Dashboard = () => {
                         <div className={`${stat.color} p-4 rounded-2xl text-white text-2xl transition-transform group-hover:scale-105`}>
                             {stat.icon}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 text-left">
                             <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
                             {loading ? (
                                 <div className="h-7 w-12 bg-slate-100 rounded animate-pulse mt-1" />
@@ -213,7 +214,7 @@ const Dashboard = () => {
                                 </tr>
                             ) : recentOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
+                                    <td colSpan={7} className="px-8 py-12 text-center text-sm font-medium text-slate-400">
                                         No hay pedidos registrados en este momento. Haz clic en "+ Nuevo Pedido".
                                     </td>
                                 </tr>
@@ -241,7 +242,6 @@ const Dashboard = () => {
                                             </td>
                                             <td className="px-8 py-5 text-sm font-bold text-slate-900">{Number(order.total).toFixed(2)}€</td>
                                             
-                                            {/* COLUMNA ACCIONES: Botón Dinámico de Facturación */}
                                             <td className="px-8 py-3 text-center">
                                                 <button
                                                     disabled={!puedeFacturar}
@@ -265,9 +265,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* ================================================== */}
-            {/* ESTRUCTURA DEL MODAL EMERGENTE (DISEÑO FLOATING)    */}
-            {/* ================================================== */}
+            {/* Modal Emergente */}
             {activeModal && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
                     <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
@@ -286,7 +284,7 @@ const Dashboard = () => {
                             </button>
                         </div>
 
-                        {/* Desglose de Registros de la celda abierta */}
+                        {/* Desglose de Registros */}
                         <div className="p-6 overflow-y-auto flex-1">
                             {getModalFilteredOrders().length === 0 ? (
                                 <div className="text-center py-12 text-slate-400 font-medium text-sm">

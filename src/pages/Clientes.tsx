@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiShoppingBag, FiEye } from 'react-icons/fi';
 
+// Interfaz que refleja el modelo de datos unificado
 interface Cliente {
     id_referencia: number;
     cliente: string;
@@ -14,16 +15,18 @@ const Clientes = () => {
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const ID_EMPRESA = 1;
+    // 🚀 CORREGIDO: Leemos el ID real de la sesión activa desde el localStorage
+    const idEmpresa = localStorage.getItem('id_empresa') || '1';
 
     const cargarClientes = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/clientes/${ID_EMPRESA}`);
+            // Inyectamos dinámicamente la variable del local activo en la petición fetch
+            const response = await fetch(`http://localhost:5000/api/clientes/${idEmpresa}`);
             if (!response.ok) throw new Error("Error leyendo el servidor local");
             
             const data = await response.json();
-            setClientes(data);
+            setClientes(data); // Si es una empresa nueva sin historial, recibirá un array vacío []
         } catch (error) {
             console.error("Error al cargar clientes:", error);
         } finally {
@@ -33,7 +36,7 @@ const Clientes = () => {
 
     useEffect(() => {
         cargarClientes();
-    }, []);
+    }, [idEmpresa]);
 
     return (
         <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
@@ -48,7 +51,7 @@ const Clientes = () => {
 
             {/* Tarjeta Contenedora Principal */}
             <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-white overflow-hidden">
-                <div className="bg-blue-600 p-8 text-white">
+                <div className="bg-blue-600 p-8 text-white text-left">
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <FiUser /> Base de Datos de Clientes
                     </h1>
@@ -78,8 +81,8 @@ const Clientes = () => {
                                 </tr>
                             ) : clientes.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
-                                        No hay clientes registrados en el sistema todavía.
+                                    <td colSpan={5} className="px-8 py-12 text-center text-sm font-medium text-slate-400">
+                                        No hay clientes registrados en este local todavía.
                                     </td>
                                 </tr>
                             ) : (
@@ -88,7 +91,7 @@ const Clientes = () => {
                                         <td className="px-8 py-5 text-sm font-bold text-slate-400">#C-{item.id_referencia}</td>
                                         <td className="px-8 py-5 text-sm font-bold text-slate-800 flex items-center gap-2">
                                             <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold uppercase">
-                                                {item.cliente.charAt(0)}
+                                                {item.cliente ? item.cliente.charAt(0) : '?'}
                                             </div>
                                             {item.cliente}
                                         </td>
@@ -100,7 +103,6 @@ const Clientes = () => {
                                         <td className="px-8 py-5 text-sm font-black text-slate-900 text-right">
                                             <span className="text-emerald-600 font-bold">{Number(item.totalGastado).toFixed(2)}€</span>
                                         </td>
-                                        {/* NUEVO: Botón para ir al detalle codificando el nombre en la URL */}
                                         <td className="px-8 py-3 text-center">
                                             <button 
                                                 onClick={() => navigate(`/clientes/detalle/${encodeURIComponent(item.cliente)}`)}
