@@ -82,7 +82,7 @@ app.post('/api/register', async (req, res) => {
 
           const sqlUsuario = `
             INSERT INTO usuario (id_empresa, username, password, email, rol) 
-            VALUES (?, ?, ?, ?, 'admin')
+            VALUES (?, ?, ?, ?, 'empleado')
           `;
 
           db.query(
@@ -91,11 +91,11 @@ app.post('/api/register', async (req, res) => {
             (err, resultUsuario) => {
               if (err) {
                 return db.rollback(() => {
-                  console.error("❌ Error al insertar credenciales del usuario admin:", err);
+                  console.error("❌ Error al insertar credenciales del usuario :", err);
                   if (err.code === 'ER_DUP_ENTRY') {
                     return res.status(400).json({ message: "El nombre de usuario de acceso ya está cogido por otra empresa." });
                   }
-                  return res.status(500).json({ message: "Error al configurar el usuario administrador." });
+                  return res.status(500).json({ message: "Error al configurar el usuario." });
                 });
               }
 
@@ -273,7 +273,7 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (CORREGIDA 🛠️)
+// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
@@ -502,7 +502,7 @@ app.get('/api/prendas/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: AÑADIR NUEVA PRENDA AL CATÁLOGO (CORREGIDA CON NOMBRE_PRENDA ✅)
+// RUTA: AÑADIR NUEVA PRENDA AL CATÁLOGO
 // ==========================================
 app.post('/api/prendas', (req, res) => {
   const { id_empresa, nombre_prenda, precio_base } = req.body;
@@ -511,7 +511,6 @@ app.post('/api/prendas', (req, res) => {
     return res.status(400).json({ message: "Faltan campos obligatorios para registrar la prenda." });
   }
 
-  // Corregido: 'nombre_prenda' en vez de 'font_prenda'
   const sql = 'INSERT INTO prenda (id_empresa, nombre_prenda, precio_base) VALUES (?, ?, ?)';
 
   db.query(sql, [id_empresa, nombre_prenda, precio_base], (err, result) => {
@@ -645,6 +644,57 @@ app.post('/api/admin/empleados', async (req, res) => {
 
   } catch (error) {
     console.error("❌ Error inesperado en alta de empleado:", error);
+    return res.status(500).json({ message: "Error inesperado del servidor." });
+  }
+});
+
+// RUTA ADMIN: MODIFICAR DATOS DE UN EMPLEADO (SOPORTA CAMBIO OPCIONAL DE CLAVE 🛠️)
+app.put('/api/admin/empleados/:id_usuario', async (req, res) => {
+  const { id_usuario } = req.params;
+  const { username, email, password } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ message: "El nombre de usuario es obligatorio." });
+  }
+
+  try {
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const sqlWithPass = `
+        UPDATE usuario 
+        SET username = ?, email = ?, password = ? 
+        WHERE id_usuario = ? AND rol = 'empleado'
+      `;
+      
+      db.query(sqlWithPass, [username, email, hashedPassword, id_usuario], (err, result) => {
+        if (err) {
+          console.error("❌ Error al actualizar empleado con password:", err);
+          if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: "Este nombre de usuario ya está cogido." });
+          return res.status(500).json({ message: "Error al modificar los datos del empleado." });
+        }
+        return res.json({ message: "Empleado y contraseña actualizados con éxito." });
+      });
+    } else {
+      const sqlNoPass = `
+        UPDATE usuario 
+        SET username = ?, email = ? 
+        WHERE id_usuario = ? AND rol = 'empleado'
+      `;
+
+      db.query(sqlNoPass, [username, email, id_usuario], (err, result) => {
+        if (err) {
+          console.error("❌ Error al actualizar empleado sin password:", err);
+          if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ message: "Este nombre de usuario ya está cogido." });
+          return res.status(500).json({ message: "Error al modificar los datos básicos." });
+        }
+        return res.json({ message: "Datos básicos del operario actualizados." });
+      });
+    }
+
+  } catch (error) {
+    console.error("❌ Error inesperado en actualización de empleado:", error);
     return res.status(500).json({ message: "Error inesperado del servidor." });
   }
 });

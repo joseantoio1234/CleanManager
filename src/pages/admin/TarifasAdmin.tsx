@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { FiPlus, FiSearch, FiDollarSign, FiTag } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiDollarSign, FiTag, FiArrowLeft } from 'react-icons/fi';
 
 interface Prenda {
   id_prenda: number;
@@ -10,6 +11,8 @@ interface Prenda {
 }
 
 const TarifasAdmin = () => {
+  const navigate = useNavigate();
+  
   const [prendas, setPrendas] = useState<Prenda[]>([]);
   const [busqueda, setBusqueda] = useState('');
   const [nombrePrenda, setNombrePrenda] = useState('');
@@ -37,7 +40,7 @@ const TarifasAdmin = () => {
     cargarPrendas();
   }, []);
 
-  // 2. Manejar el alta de una nueva prenda (Envío POST al backend)
+  // 2. Manejar el alta de una nueva prenda (Envío POST al backend con temporizador)
   const handleGuardarPrenda = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -73,6 +76,12 @@ const TarifasAdmin = () => {
         setNombrePrenda('');
         setPrecioBase('');
         cargarPrendas(); // Recargamos la tabla automáticamente llamando a MySQL de nuevo
+
+        // ⏱️ Desaparece el mensaje automáticamente a los 3 segundos (3000ms)
+        setTimeout(() => {
+          setSuccessMsg('');
+        }, 3000);
+
       } else {
         setErrorMsg(data.message || 'No se pudo guardar la prenda.');
       }
@@ -91,10 +100,20 @@ const TarifasAdmin = () => {
   return (
     <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 p-6 flex flex-col items-center animate-in fade-in duration-300">
       
-      {/* Encabezado del Módulo */}
-      <div className="w-full max-w-6xl mb-6 text-left">
-        <h1 className="text-2xl font-black text-slate-800 tracking-tight">Configuración de Tarifas</h1>
-        <p className="text-xs text-slate-400 font-medium">Gestiona los precios base de los servicios y ropa para el mostrador TPV.</p>
+      {/* Encabezado del Módulo con Botón de Retorno Incorporado */}
+      <div className="w-full max-w-6xl mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-left">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Configuración de Tarifas</h1>
+          <p className="text-xs text-slate-400 font-medium">Gestiona los precios base de los servicios y ropa para el mostrador TPV.</p>
+        </div>
+        
+        <button 
+          onClick={() => navigate('/inicio-admin')}
+          className="flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-600 font-bold text-xs h-10 px-4 rounded-xl border border-slate-200/80 shadow-sm transition-all active:scale-95"
+        >
+          <FiArrowLeft size={16} className="text-slate-400" />
+          Volver al menú
+        </button>
       </div>
 
       {/* Grid Panorámico de dos columnas (Formulario + Tabla) */}
@@ -108,7 +127,9 @@ const TarifasAdmin = () => {
           </h2>
 
           {errorMsg && <div className="p-3 bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-xl mb-3 text-center">{errorMsg}</div>}
-          {successMsg && <div className="p-3 bg-green-50 border border-green-100 text-green-600 text-xs font-bold rounded-xl mb-3 text-center animate-bounce">{successMsg}</div>}
+          
+          {/* Mensaje estático y limpio sin rebotes molestos */}
+          {successMsg && <div className="p-3 bg-green-50 border border-green-100 text-green-600 text-xs font-bold rounded-xl mb-3 text-center">{successMsg}</div>}
 
           <form onSubmit={handleGuardarPrenda} className="space-y-4">
             <div className="space-y-1 text-left">

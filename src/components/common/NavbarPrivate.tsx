@@ -58,7 +58,7 @@ export const NavbarPrivate = () => {
           onClick={handleLogout}
           className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 px-3.5 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 border border-rose-200/20 shadow-sm shadow-rose-100/30"
         >
-          <FiLogOut size={13} /> Cerrar Sesión
+          <FiLogOut size={13} /> 
         </button>
 
       </div>
