@@ -17,6 +17,7 @@ import Cobros from '../pages/Cobros';
 import InicioAdmin from '../pages/admin/InicioAdmin';
 import TarifasAdmin from '../pages/admin/TarifasAdmin';
 import EmpleadosAdmin from '../pages/admin/EmpleadosAdmin';
+import ClientesAdmin from '../pages/admin/ClientesAdmin'; // 🚀 NUEVA IMPORTACIÓN
 
 import { Navbar } from '../components/common/Navbar';
 import { NavbarPrivate } from '../components/common/NavbarPrivate';
@@ -36,7 +37,8 @@ function AppContent() {
     '/perfil',
     '/clientes',
     '/prendas',
-    '/admin-empleados', // Asegura el Navbar privado en la sección de personal
+    '/admin-empleados',
+    '/admin-clientes', // 🚀 Asegura el Navbar privado en la sección de control de clientes
     '/cobros' 
   ].includes(location.pathname) ||
     location.pathname.startsWith('/clientes/detalle/') ||
@@ -141,6 +143,13 @@ function AppContent() {
           <Route path="/admin-empleados" element={
             <div className="py-10">
               <EmpleadosAdmin />
+            </div>
+          } />
+
+          {/* 🚀 NUEVO: Alta, unificación y control de la base de datos de Clientes */}
+          <Route path="/admin-clientes" element={
+            <div className="py-10">
+              <ClientesAdmin />
             </div>
           } />
 

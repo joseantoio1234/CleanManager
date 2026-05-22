@@ -717,6 +717,48 @@ app.put('/api/admin/empleados/:id_usuario', async (req, res) => {
   }
 });
 
+// ==========================================
+// RUTA ADMIN: ACTUALIZAR DATOS DE UN CLIENTE (MULTIEMPRESA 🔒)
+// ==========================================
+app.put('/api/admin/clientes/update', (req, res) => {
+  const { id_empresa, clienteViejo, clienteNuevo } = req.body;
+
+  if (!id_empresa || !clienteViejo || !clienteNuevo) {
+    return res.status(400).json({ message: "Faltan campos obligatorios para actualizar el cliente." });
+  }
+
+  const sql = `UPDATE pedido SET cliente = ? WHERE id_empresa = ? AND cliente = ?`;
+
+  db.query(sql, [clienteNuevo, id_empresa, clienteViejo], (err, result) => {
+    if (err) {
+      console.error("❌ Error al actualizar el cliente en MySQL:", err);
+      return res.status(500).json({ message: "Error interno al modificar los datos del cliente." });
+    }
+    return res.json({ message: "Cliente actualizado con éxito en todos los registros." });
+  });
+});
+
+// ==========================================
+// RUTA ADMIN: ELIMINAR CLIENTE Y SUS REGISTROS DE LA EMPRESA
+// ==========================================
+app.delete('/api/admin/clientes/delete', (req, res) => {
+  const { id_empresa, nombre_cliente } = req.body;
+
+  if (!id_empresa || !nombre_cliente) {
+    return res.status(400).json({ message: "Faltan datos para procesar la baja." });
+  }
+
+  const sql = `DELETE FROM pedido WHERE id_empresa = ? AND cliente = ?`;
+
+  db.query(sql, [id_empresa, nombre_cliente], (err, result) => {
+    if (err) {
+      console.error("❌ Error al eliminar el cliente en MySQL:", err);
+      return res.status(500).json({ message: "Error interno al borrar el cliente." });
+    }
+    return res.json({ message: "Cliente y su historial eliminados del sistema correctamente." });
+  });
+});
+
 // Iniciar el servidor en el puerto 5000
 const PORT = 5000;
 app.listen(PORT, () => {
