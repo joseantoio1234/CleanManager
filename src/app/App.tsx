@@ -12,12 +12,13 @@ import Inicio from '../pages/Inicio';
 import Cobros from '../pages/Cobros'; 
 
 // ==========================================
-// 👑 IMPORTACIONES DE LA NUEVA CARPETA ADMIN
+// 👑 IMPORTACIONES DE LA CARPETA ADMIN
 // ==========================================
 import InicioAdmin from '../pages/admin/InicioAdmin';
 import TarifasAdmin from '../pages/admin/TarifasAdmin';
 import EmpleadosAdmin from '../pages/admin/EmpleadosAdmin';
-import ClientesAdmin from '../pages/admin/ClientesAdmin'; // 🚀 NUEVA IMPORTACIÓN
+import ClientesAdmin from '../pages/admin/ClientesAdmin';
+import FacturasAdmin from '../pages/admin/FacturasAdmin'; // 🚀 NUEVA IMPORTACIÓN FISCAL
 
 import { Navbar } from '../components/common/Navbar';
 import { NavbarPrivate } from '../components/common/NavbarPrivate';
@@ -38,7 +39,8 @@ function AppContent() {
     '/clientes',
     '/prendas',
     '/admin-empleados',
-    '/admin-clientes', // 🚀 Asegura el Navbar privado en la sección de control de clientes
+    '/admin-clientes',
+    '/admin-facturas', // 🚀 Asegura el Navbar privado en la sección de control fiscal e IVA
     '/cobros' 
   ].includes(location.pathname) ||
     location.pathname.startsWith('/clientes/detalle/') ||
@@ -146,10 +148,17 @@ function AppContent() {
             </div>
           } />
 
-          {/* 🚀 NUEVO: Alta, unificación y control de la base de datos de Clientes */}
+          {/* Alta, unificación y control de la base de datos de Clientes */}
           <Route path="/admin-clientes" element={
             <div className="py-10">
               <ClientesAdmin />
+            </div>
+          } />
+
+          {/* 🚀 NUEVO: Módulo de Auditoría Fiscal, IVA e Historial de Facturación */}
+          <Route path="/admin-facturas" element={
+            <div className="py-10">
+              <FacturasAdmin />
             </div>
           } />
 

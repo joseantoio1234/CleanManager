@@ -759,6 +759,39 @@ app.delete('/api/admin/clientes/delete', (req, res) => {
   });
 });
 
+
+// ==========================================
+// RUTA ADMIN: OBTENER HISTORIAL FISCAL E IVA DE UNA EMPRESA (SaaS🔒)
+// ==========================================
+app.get('/api/admin/facturas/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  const sql = `
+    SELECT 
+      f.id_factura, 
+      f.num_factura, 
+      f.fecha_factura, 
+      f.base_imponible, 
+      f.importe_iva, 
+      f.total_facturado, 
+      f.metodo_pago,
+      p.cliente,
+      p.prenda
+    FROM factura f
+    INNER JOIN pedido p ON f.id_pedido = p.id_pedido
+    WHERE f.id_empresa = ?
+    ORDER BY f.fecha_factura DESC
+  `;
+
+  db.query(sql, [id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer historial fiscal de MySQL:", err);
+      return res.status(500).json({ message: "Error interno al cargar los libros de IVA." });
+    }
+    return res.json(results);
+  });
+});
+
 // Iniciar el servidor en el puerto 5000
 const PORT = 5000;
 app.listen(PORT, () => {

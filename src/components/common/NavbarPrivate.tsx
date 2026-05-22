@@ -7,6 +7,9 @@ export const NavbarPrivate = () => {
   
   // Extraemos dinámicamente el nombre real de la empresa guardado al registrarse o hacer login
   const userName = localStorage.getItem('nombre_tintoreria') || "Mi Tintorería";
+  
+  // 🚀 NUEVO: Recuperamos el rol del usuario logueado para dinamizar la navegación principal
+  const rol = localStorage.getItem('rol') || 'empleado';
 
   const handleLogout = async () => {
     try {
@@ -22,8 +25,12 @@ export const NavbarPrivate = () => {
 
   return (
     <nav className="w-full bg-white border-b border-slate-100 px-6 py-3 flex items-center justify-between sticky top-0 z-50 print:hidden">
-      {/* Logo Izquierda */}
-      <Link to="/inicio" className="text-2xl font-bold text-blue-600 tracking-tight select-none">
+      
+      {/* Logo Izquierda - 🚀 CORREGIDO: Redirección inteligente según el rol del usuario */}
+      <Link 
+        to={rol === 'admin' ? '/inicio-admin' : '/inicio'} 
+        className="text-2xl font-bold text-blue-600 tracking-tight select-none"
+      >
         CleanManager
       </Link>
 

@@ -86,12 +86,17 @@ const ClientesAdmin = () => {
 
     return (
         <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
-            <button 
-                onClick={() => navigate('/dashboard-admin')} // Cambia la ruta a la de tu menú admin si es otra
-                className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm transition-colors group"
-            >
-                <FiArrowLeft className="group-hover:-translate-x-1 transition-transform" /> Volver al menú
-            </button>
+            
+            {/* Botón Volver al menú de cápsula blanca estilizado */}
+            <div className="w-full max-w-6xl flex justify-end mb-2">
+                <button 
+                    onClick={() => navigate('/inicio-admin')} 
+                    className="flex items-center gap-2 bg-white text-slate-700 px-5 py-2.5 rounded-2xl font-bold text-sm border border-slate-100 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm group"
+                >
+                    <FiArrowLeft className="text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-1 transition-all" size={16} /> 
+                    <span>Volver al menú</span>
+                </button>
+            </div>
 
             <div className="w-full text-left">
                 <h1 className="text-3xl font-black text-slate-800 tracking-tight">Control de Clientes</h1>
