@@ -9,7 +9,7 @@ import { authRepository } from '../database/repositories/auth.repository';
 interface PrendaCatalogo {
   id_prenda: number;
   nombre_prenda: string;
-  precio_base: number;
+  precio_base: any; // Lo dejamos flexible por si viene como string desde la API
 }
 
 const NuevoPedido = () => {
@@ -34,7 +34,7 @@ const NuevoPedido = () => {
         // Recuperamos el id_empresa de la sesión activa
         const idEmpresa = localStorage.getItem('id_empresa') || '1';
         
-        const response = await fetch(`http://localhost:3000/api/prendas-mostrador/${idEmpresa}`);
+        const response = await fetch(`http://localhost:5000/api/prendas/${idEmpresa}`);
         if (!response.ok) throw new Error('Error al solicitar el catálogo');
         
         const data = await response.json();
@@ -61,8 +61,9 @@ const NuevoPedido = () => {
         } else {
           const prendaSeleccionada = listaPrendas.find(p => p.nombre_prenda === value);
           if (prendaSeleccionada) {
-            // Rellenamos el precio base formateado a dos decimales
-            nuevoEstado.total = prendaSeleccionada.precio_base.toFixed(2);
+            // 🚀 PARSEO SEGURO: Convertimos a número antes de usar .toFixed() para evitar el error
+            const precioNumerico = Number(prendaSeleccionada.precio_base) || 0;
+            nuevoEstado.total = precioNumerico.toFixed(2);
           } else {
             nuevoEstado.total = '';
           }
@@ -172,12 +173,15 @@ const NuevoPedido = () => {
                 >
                   <option value="">Selecciona la prenda...</option>
                   
-                  {/* Renderizamos dinámicamente las prendas cargadas de MySQL */}
-                  {listaPrendas.map((item) => (
-                    <option key={item.id_prenda} value={item.nombre_prenda}>
-                      {item.nombre_prenda} ({item.precio_base.toFixed(2)}€)
-                    </option>
-                  ))}
+                  {/* 🚀 PARSEO SEGURO: Convertimos a número también en el mapeo de las opciones */}
+                  {listaPrendas.map((item) => {
+                    const precioNumerico = Number(item.precio_base) || 0;
+                    return (
+                      <option key={item.id_prenda} value={item.nombre_prenda}>
+                        {item.nombre_prenda} ({precioNumerico.toFixed(2)}€)
+                      </option>
+                    );
+                  })}
                   
                   {/* Comodín de Emergencia para artículos raros */}
                   <option value="Varios">-- [Prenda Comodín / Especial Varios] --</option>
@@ -214,7 +218,6 @@ const NuevoPedido = () => {
                   type="text" 
                   placeholder="0.00" 
                   required 
-                  // Si seleccionó una prenda estándar, deshabilitamos para evitar que alteren la tarifa fija
                   disabled={formData.prenda !== 'Varios' && formData.prenda !== ''} 
                   className={`rounded-xl border-slate-100 ${formData.prenda !== 'Varios' && formData.prenda !== '' ? 'bg-slate-100 cursor-not-allowed font-semibold text-slate-700' : 'bg-slate-50/50'}`} 
                 />

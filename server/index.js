@@ -290,11 +290,11 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN
+// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (MÉTODO DINÁMICO 💳)
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
-  const { estado } = req.body;
+  const { estado, metodo_pago } = req.body; // 🚀 Recibimos el método de pago dinámico desde React
 
   if (!estado) {
     return res.status(400).json({ message: "El nuevo estado es obligatorio." });
@@ -372,12 +372,14 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
             const baseImponible = totalFacturado / 1.21;
             const importeIva = totalFacturado - baseImponible;
 
+            // 🚀 CORREGIDO: Cambiamos 'EFECTIVO' rígido por el marcador (?) dinámico
             const sqlInsertFactura = `
               INSERT INTO factura (id_pedido, id_empresa, num_factura, base_imponible, importe_iva, total_facturado, metodo_pago)
-              VALUES (?, ?, ?, ?, ?, ?, 'EFECTIVO')
+              VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
 
-            db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado], (err, resultInsert) => {
+            // 🚀 CORREGIDO: Se inyecta metodo_pago enviado por el operario (Falla de respaldo: 'EFECTIVO')
+            db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado, metodo_pago || 'EFECTIVO'], (err, resultInsert) => {
               if (err) {
                 return db.rollback(() => {
                   console.error("❌ Error al insertar en tabla factura:", err);
@@ -389,7 +391,7 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
                 if (err) {
                   return db.rollback(() => res.status(500).json({ message: "Error al consolidar factura." }));
                 }
-                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido}`);
+                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido} via [${metodo_pago || 'EFECTIVO'}]`);
                 return res.json({ message: "Pedido entregado y factura legal correlativa generada." });
               });
             });
@@ -759,7 +761,6 @@ app.delete('/api/admin/clientes/delete', (req, res) => {
   });
 });
 
-
 // ==========================================
 // RUTA ADMIN: OBTENER HISTORIAL FISCAL E IVA DE UNA EMPRESA (SaaS🔒)
 // ==========================================
@@ -791,6 +792,41 @@ app.get('/api/admin/facturas/:id_empresa', (req, res) => {
     return res.json(results);
   });
 });
+
+
+// ==========================================
+// RUTA MOSTRADOR: BUSCAR TELÉFONO DE CLIENTE EXISTENTE (SaaS 🔒)
+// ==========================================
+app.get('/api/clientes/buscar-telefono', (req, res) => {
+  const { id_empresa, nombre_cliente } = req.query;
+
+  if (!id_empresa || !nombre_cliente) {
+    return res.status(400).json({ message: "Faltan parámetros de búsqueda." });
+  }
+
+  // Buscamos el último pedido de ese cliente en esa empresa específica para obtener su teléfono
+  const sql = `
+    SELECT telefono 
+    FROM pedido 
+    WHERE id_empresa = ? AND cliente = ? 
+    ORDER BY fecha_pedido DESC 
+    LIMIT 1
+  `;
+
+  db.query(sql, [id_empresa, nombre_cliente.trim()], (err, results) => {
+    if (err) {
+      console.error("❌ Error al buscar teléfono del cliente en MySQL:", err);
+      return res.status(500).json({ message: "Error interno en el servidor." });
+    }
+
+    if (results.length > 0) {
+      return res.json({ existe: true, telefono: results[0].telefono });
+    } else {
+      return res.json({ existe: false, telefono: '' });
+    }
+  });
+});
+
 
 // Iniciar el servidor en el puerto 5000
 const PORT = 5000;
