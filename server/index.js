@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 
+// 🚀 CORREGIDO: Inicialización limpia de Express para evitar el error 'app.use is not a function'
 const app = express();
 
 // Configuración de Middlewares
@@ -81,13 +82,11 @@ app.post('/api/register', async (req, res) => {
 
           const nuevoIdEmpresa = resultEmpresa.insertId;
 
-          // El rol pasa a ser dinámico (?) para admitir administradores independientes
           const sqlUsuario = `
             INSERT INTO usuario (id_empresa, username, password, email, rol) 
             VALUES (?, ?, ?, ?, ?)
           `;
 
-          // Por defecto, si el registro viene de la landing sin especificar rol, se le asigna 'admin'
           const rolFinal = rol || 'admin';
 
           db.query(
@@ -139,7 +138,6 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
   }
 
-  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA JEREZ)
   if (username === 'admin_jerez') {
     console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Jerez.`);
     return res.json({
@@ -151,7 +149,6 @@ app.post('/api/login', (req, res) => {
     });
   }
 
-  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA MÉRIDA - ID: 6)
   if (username === 'admin_merida') {
     console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Mérida.`);
     return res.json({
@@ -232,7 +229,7 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
       pedidosHoy: results[0].pedidosHoy || 0,
       enProceso: results[0].enProceso || 0,
       listosEntrega: results[0].listosEntrega || 0,
-      ingressosMes: Number(results[0].ingresosMes) || 0
+      ingresosMes: Number(results[0].ingresosMes) || 0
     });
   });
 });
@@ -290,7 +287,7 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (MÉTODO DINÁMICO BLINDADO 💳)
+// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (MÉTODO DINÁMICO GLOBAL BLINDADO 💳)
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
@@ -300,8 +297,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
     return res.status(400).json({ message: "El nuevo estado es obligatorio." });
   }
 
-  // 🚀 BLINDAJE DE SEGURIDAD INTERNO:
-  // Si cambia a estado ENTREGADO pero viene vacío el método de pago de la tabla, asume EFECTIVO para no colapsar
   let metodoPagoFinal = metodo_pago;
   if (estado === 'ENTREGADO' && !metodoPagoFinal) {
     metodoPagoFinal = 'EFECTIVO';
@@ -357,7 +352,7 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 
           const { total, id_empresa, anio_actual } = pedidoData[0];
 
-          // 🚀 CORREGIDO: Consulta global usando MAX para evitar pisar la numeración única de otras empresas
+          // 🚀 MEJORADO: Consulta limpia usando MAX de forma global para prevenir colisiones 'UNIQUE' multi-inquilino
           const sqlLastNum = `
             SELECT MAX(num_factura) as last_num FROM factura 
             WHERE num_factura LIKE ?
@@ -367,7 +362,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
               return db.rollback(() => res.status(500).json({ message: "Error calculando serie correlativa." }));
             }
 
-            // 🚀 CORREGIDO: Mapeo robusto sobre el alias 'last_num' global
             let nuevoContador = 1;
             if (lastFactura.length > 0 && lastFactura[0].last_num) {
               const partes = lastFactura[0].last_num.split('-');
@@ -385,7 +379,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
               VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
 
-            // Inyecta el método de pago final blindado
             db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado, metodoPagoFinal], (err, resultInsert) => {
               if (err) {
                 return db.rollback(() => {
@@ -549,11 +542,12 @@ app.post('/api/prendas', (req, res) => {
 });
 
 // ==========================================
-// RUTA: DATOS OPERATIVOS DE LA CAJA DIARIA
+// RUTA: DATOS OPERATIVOS DE LA CAJA DIARIA (CORREGIDA 📊)
 // ==========================================
 app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
+  // 1. Pedidos que están listos (ACABADO) pero aún NO se han entregado ni cobrado
   const sqlPendientes = `
     SELECT id_pedido, cliente, prenda, servicio, total, estado 
     FROM pedido 
@@ -561,23 +555,35 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     ORDER BY id_pedido DESC
   `;
 
+  // 2. Sumatorio de ingresos del día de hoy filtrado de forma segura por rango de fecha local
   const sqlMetodos = `
     SELECT metodo_pago, COALESCE(SUM(total_facturado), 0) as total
     FROM factura
-    WHERE id_empresa = ? AND DATE(fecha_factura) = CURDATE()
+    WHERE id_empresa = ? 
+      AND DATE(fecha_factura) = CURRENT_DATE()
     GROUP BY metodo_pago
   `;
 
   db.query(sqlPendientes, [id_empresa], (err, pendientes) => {
-    if (err) return res.status(500).json({ message: "Error en servidor." });
+    if (err) {
+      console.error("❌ Error en caja (pendientes):", err);
+      return res.status(500).json({ message: "Error en el servidor local." });
+    }
 
-    db.query(sqlMetodos, [id_empresa], (err, metodosRows) => {
-      if (err) return res.status(500).json({ message: "Error en servidor." });
+    db.query(sqlMetodos, [id_empresa], (errMetodos, metodosRows) => {
+      if (errMetodos) {
+        console.error("❌ Error en caja (métodos de pago):", errMetodos);
+        return res.status(500).json({ message: "Error en el servidor local." });
+      }
 
+      // Estructura inicial limpia para el gráfico de React
       const graficoCaja = { EFECTIVO: 0, TARJETA: 0, BIZUM: 0 };
+      
       metodosRows.forEach(row => {
-        if (graficoCaja[row.metodo_pago] !== undefined) {
-          graficoCaja[row.metodo_pago] = Number(row.total);
+        // Normalizamos a mayúsculas por si acaso
+        const metodo = String(row.metodo_pago).toUpperCase();
+        if (graficoCaja[metodo] !== undefined) {
+          graficoCaja[metodo] = Number(row.total);
         }
       });
 
@@ -588,7 +594,6 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     });
   });
 });
-
 // ==========================================
 // 👑 NUEVAS RUTAS EXCLUSIVAS DEL ADMINISTRADOR
 // ==========================================

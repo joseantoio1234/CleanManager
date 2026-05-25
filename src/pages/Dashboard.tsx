@@ -11,7 +11,6 @@ import {
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 
-// Interfaz que refleja el modelo de datos unificado
 interface Pedido {
     id_pedido: number;
     prenda: string;
@@ -31,16 +30,12 @@ const Dashboard = () => {
         ingresosMes: 0
     });
     const [recentOrders, setRecentOrders] = useState<Pedido[]>([]);
-    const [allOrders, setAllOrders] = useState<Pedido[]>([]); // Almacena el historial mensual para los modales
+    const [allOrders, setAllOrders] = useState<Pedido[]>([]); 
     const [loading, setLoading] = useState(true);
-    
-    // Estado de control para saber qué modal se encuentra abierto
     const [activeModal, setActiveModal] = useState<'HOY' | 'PROCESO' | 'LISTOS' | 'INGRESOS' | null>(null);
 
-    // 🚀 CORREGIDO: Leemos el ID real de la empresa del localStorage para evitar cruce de datos
     const idEmpresa = localStorage.getItem('id_empresa') || '1';
 
-    // Función asíncrona para sincronizar todo el estado global con MySQL de forma aislada
     const cargarDatosDashboard = async () => {
         try {
             setLoading(true);
@@ -64,13 +59,18 @@ const Dashboard = () => {
         }
     };
 
-    // Lanzador PUT para actualizar estados directamente desde el selector de la tabla
-    const handleStatusChange = async (id_pedido: number, nuevoEstado: string) => {
+    // Modificamos para enviar opcionalmente el estado y el método de pago
+    const handleStatusChange = async (id_pedido: number, nuevoEstado: string, metodoPago?: string) => {
         try {
+            const bodyPayload: any = { estado: nuevoEstado };
+            if (metodoPago) {
+                bodyPayload.metodo_pago = metodoPago;
+            }
+
             const response = await fetch(`http://localhost:5000/api/orders/${id_pedido}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: nuevoEstado }),
+                body: JSON.stringify(bodyPayload),
             });
 
             if (!response.ok) throw new Error("No se pudo actualizar el estado en el servidor");
@@ -85,7 +85,6 @@ const Dashboard = () => {
         cargarDatosDashboard();
     }, [idEmpresa]);
 
-    // Configuración visual para estilizar los badges del taller
     const getStatusStyles = (estado: string) => {
         switch (estado) {
             case 'SIN_EMPEZAR': return 'bg-slate-100 text-slate-700 border-slate-200';
@@ -97,10 +96,8 @@ const Dashboard = () => {
         }
     };
 
-    // Filtro dinámico en memoria para renderizar las tablas internas del Modal
     const getModalFilteredOrders = () => {
-        const hoyStr = new Date().toLocaleDateString('en-CA'); // Formato estándar local YYYY-MM-DD
-        
+        const hoyStr = new Date().toLocaleDateString('en-CA'); 
         switch (activeModal) {
             case 'HOY':
                 return allOrders.filter(o => o.fecha_pedido && o.fecha_pedido.startsWith(hoyStr));
@@ -117,12 +114,11 @@ const Dashboard = () => {
 
     const modalTitle = {
         HOY: 'Pedidos Registrados Hoy',
-        PROCESO: 'Prendas Actualmente En Proceso (Taller)',
-        LISTOS: 'Pedidos Listos para Recogida (Entrega)',
-        INGRESOS: 'Desglose de Caja / Ingresos Cobrados'
+        PROCESO: 'Prendas En Proceso',
+        LISTOS: 'Pedidos Listos para Recogida',
+        INGRESOS: 'Desglose de Caja / Ingresos'
     }[activeModal || 'HOY'];
 
-    // 🚀 BLINDADO: En el campo value aplicamos Number() preventivo
     const statsConfig = [
         { id: 'HOY' as const, label: 'Pedidos Hoy', value: `${statsData.pedidosHoy}`, icon: <FiBox />, color: 'bg-blue-500' },
         { id: 'PROCESO' as const, label: 'En Proceso', value: `${statsData.enProceso}`, icon: <FiClock />, color: 'bg-amber-500' },
@@ -133,21 +129,19 @@ const Dashboard = () => {
     return (
         <div className="w-full max-w-7xl mx-auto space-y-8 p-6 relative">
             
-            {/* Cabecera de Bienvenida con accesos unificados */}
+            {/* Cabecera de Bienvenida */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="text-left">
                     <h1 className="text-3xl font-bold text-slate-900">Panel de Control</h1>
                     <p className="text-slate-500 text-sm">Bienvenido de nuevo a la gestión de tu tintorería.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    {/* BOTÓN: Volver al menú de módulos (Inicio) */}
                     <button 
                         onClick={() => navigate('/inicio')}
                         className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm shadow-sm"
                     >
                         <FiArrowLeft /> Menú Principal
                     </button>
-                    {/* BOTÓN: Listado de Clientes */}
                     <Link to="/clientes">
                         <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold border border-slate-200 transition-all active:scale-95 text-sm shadow-sm">
                             Ver Clientes
@@ -156,7 +150,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Grid de Estadísticas Dinámicas Clicables */}
+            {/* Grid de Estadísticas Dinámicas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statsConfig.map((stat, index) => (
                     <div 
@@ -194,12 +188,14 @@ const Dashboard = () => {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">ID</th>
+                                {/* 🚀 ID ELIMINADO SEGÚN DISEÑO */}
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Cliente</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Prenda</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Servicio</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Estado de Prenda</th>
-                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Total</th>
+                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-right">Total</th>
+                                {/* 🚀 NUEVA COLUMNA INYECTADA DE FORMA ELEGANTE */}
+                                <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-center">Método de Pago</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -209,30 +205,34 @@ const Dashboard = () => {
                                     <td colSpan={7} className="px-8 py-10 text-center text-sm font-medium text-slate-400">
                                         <div className="flex items-center justify-center gap-2">
                                             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                            Cargando flujos de datos locales...
+                                            Sincronizando caja diaria...
                                         </div>
                                     </td>
                                 </tr>
                             ) : recentOrders.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-8 py-12 text-center text-sm font-medium text-slate-400">
-                                        No hay pedidos registrados en este momento. Haz clic en "+ Nuevo Pedido".
+                                        No hay pedidos registrados en este momento.
                                     </td>
                                 </tr>
                             ) : (
                                 recentOrders.map((order, idx) => {
+                                    const estaEntregado = order.estado === 'ENTREGADO';
                                     const puedeFacturar = order.estado === 'ACABADO' || order.estado === 'ENTREGADO';
+
                                     return (
                                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-8 py-5 text-sm font-bold text-blue-600">#{order.id_pedido}</td>
-                                            <td className="px-8 py-5 text-sm font-medium text-slate-700">{order.cliente}</td>
+                                            <td className="px-8 py-5 text-sm font-bold text-slate-800">{order.cliente}</td>
                                             <td className="px-8 py-5 text-sm font-medium text-slate-600">{order.prenda}</td>
                                             <td className="px-8 py-5 text-sm text-slate-500">{order.servicio}</td>
+                                            
+                                            {/* Selector del Taller */}
                                             <td className="px-8 py-3">
                                                 <select
                                                     value={order.estado}
+                                                    disabled={estaEntregado} // Bloqueado si ya se cobró y entregó
                                                     onChange={(e) => handleStatusChange(order.id_pedido, e.target.value)}
-                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border outline-none cursor-pointer transition-all ${getStatusStyles(order.estado)}`}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border outline-none cursor-pointer transition-all ${getStatusStyles(order.estado)} ${estaEntregado ? 'cursor-not-allowed opacity-90' : ''}`}
                                                 >
                                                     <option value="SIN_EMPEZAR">Sin Empezar</option>
                                                     <option value="EN_LAVADO">En Lavado</option>
@@ -241,16 +241,41 @@ const Dashboard = () => {
                                                     <option value="ENTREGADO">Entregado</option>
                                                 </select>
                                             </td>
-                                            {/* 🚀 CORREGIDO: Parseo seguro Number() para evitar el colapso de .toFixed() si total es nulo */}
-                                            <td className="px-8 py-5 text-sm font-bold text-slate-900">
+
+                                            <td className="px-8 py-5 text-sm font-black text-slate-900 text-right">
                                                 {Number(order.total || 0).toFixed(2)}€
                                             </td>
+
+                                            {/* 🚀 NUEVO SELECTOR MULTI-MÉTODO DE PAGO */}
+                                            <td className="px-8 py-3 text-center">
+                                                {estaEntregado ? (
+                                                    <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-xl text-[9px] font-black uppercase border border-slate-200/50">
+                                                        Cobrado ✓
+                                                    </span>
+                                                ) : (
+                                                    <select
+                                                        defaultValue=""
+                                                        onChange={(e) => {
+                                                            if (!e.target.value) return;
+                                                            // Al seleccionar un método, pasamos el pedido a ENTREGADO con el método elegido
+                                                            handleStatusChange(order.id_pedido, 'ENTREGADO', e.target.value);
+                                                        }}
+                                                        className="px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase bg-white border border-slate-200 text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-all text-center"
+                                                    >
+                                                        <option value="">Seleccionar Pago...</option>
+                                                        <option value="EFECTIVO">💵 Efectivo</option>
+                                                        <option value="TARJETA">💳 Tarjeta</option>
+                                                        <option value="BIZUM">📱 Bizum</option>
+                                                    </select>
+                                                )}
+                                            </td>
                                             
+                                            {/* Columna Acciones / Ticket */}
                                             <td className="px-8 py-3 text-center">
                                                 <button
                                                     disabled={!puedeFacturar}
                                                     onClick={() => navigate(`/factura/${order.id_pedido}`)}
-                                                    title={puedeFacturar ? "Generar Factura" : "Disponible al terminar o entregar la prenda"}
+                                                    title={puedeFacturar ? "Imprimir Ticket" : "Disponible al terminar o entregar la prenda"}
                                                     className={`p-2 rounded-xl border transition-all inline-flex items-center gap-1 font-bold text-xs ${
                                                         puedeFacturar 
                                                         ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 active:scale-95' 
@@ -273,22 +298,16 @@ const Dashboard = () => {
             {activeModal && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
                     <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
-                        
-                        {/* Cabecera del Modal */}
                         <div className="bg-slate-900 p-6 text-white flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2">
                                 <FiFileText className="text-xl text-blue-400" />
                                 <h3 className="text-lg font-bold">{modalTitle}</h3>
                             </div>
-                            <button 
-                                onClick={() => setActiveModal(null)}
-                                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors text-slate-400 hover:text-white"
-                            >
+                            <button onClick={() => setActiveModal(null)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors text-slate-400 hover:text-white">
                                 <FiX className="text-lg" />
                             </button>
                         </div>
 
-                        {/* Desglose de Registros */}
                         <div className="p-6 overflow-y-auto flex-1">
                             {getModalFilteredOrders().length === 0 ? (
                                 <div className="text-center py-12 text-slate-400 font-medium text-sm">
@@ -319,7 +338,6 @@ const Dashboard = () => {
                                                             {order.estado === 'ACABADO' ? 'Listo para entregar' : order.estado.replace('_', ' ')}
                                                         </span>
                                                     </td>
-                                                    {/* 🚀 CORREGIDO: Parseo seguro Number() también en la tabla del modal */}
                                                     <td className="px-6 py-4 text-xs font-black text-slate-900 text-right">
                                                         {Number(order.total || 0).toFixed(2)}€
                                                     </td>
@@ -331,12 +349,8 @@ const Dashboard = () => {
                             )}
                         </div>
 
-                        {/* Pie de Cierre */}
                         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
-                            <button 
-                                onClick={() => setActiveModal(null)}
-                                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-colors"
-                            >
+                            <button onClick={() => setActiveModal(null)} className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-colors">
                                 Cerrar Ventana
                             </button>
                         </div>

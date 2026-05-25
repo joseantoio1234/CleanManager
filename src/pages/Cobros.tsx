@@ -24,18 +24,19 @@ const Cobros = () => {
     const [statsCaja, setStatsCaja] = useState({ EFECTIVO: 0, TARJETA: 0, BIZUM: 0 });
     const [loading, setLoading] = useState(true);
 
-    const ID_EMPRESA = 1;
+    // 🚀 CORREGIDO: Extraemos el id_empresa real del inicio de sesión activo
+    const idEmpresaActive = localStorage.getItem('id_empresa') || '1';
 
     const cargarCaja = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/caja/operaciones/${ID_EMPRESA}`);
+            const response = await fetch(`http://localhost:5000/api/caja/operaciones/${idEmpresaActive}`);
             if (!response.ok) throw new Error("Error en servidor");
             const data = await response.json();
-            setListaPendientes(data.pendientes);
-            setStatsCaja(data.graficoCaja);
+            setListaPendientes(data.pendientes || []);
+            setStatsCaja(data.graficoCaja || { EFECTIVO: 0, TARJETA: 0, BIZUM: 0 });
         } catch (error) {
-            console.error(error);
+            console.error("Error cargando la caja de operaciones:", error);
         } finally {
             setLoading(false);
         }
@@ -43,7 +44,7 @@ const Cobros = () => {
 
     useEffect(() => {
         cargarCaja();
-    }, []);
+    }, [idEmpresaActive]);
 
     // Filtrado dinámico por buscador
     const pedidosFiltrados = listaPendientes.filter(p => 
@@ -51,7 +52,7 @@ const Cobros = () => {
         p.id_pedido.toString() === busqueda
     );
 
-    const totalRecaudadoHoy = statsCaja.EFECTIVO + statsCaja.TARJETA + statsCaja.BIZUM;
+    const totalRecaudadoHoy = (statsCaja.EFECTIVO || 0) + (statsCaja.TARJETA || 0) + (statsCaja.BIZUM || 0);
 
     // ==========================================
     // CONFIGURACIÓN ESTRUCTURAL DEL GRÁFICO (DÓNUT)
@@ -60,7 +61,7 @@ const Cobros = () => {
         labels: ['Efectivo', 'Tarjeta', 'Bizum'],
         datasets: [
             {
-                data: [statsCaja.EFECTIVO, statsCaja.TARJETA, statsCaja.BIZUM],
+                data: [statsCaja.EFECTIVO || 0, statsCaja.TARJETA || 0, statsCaja.BIZUM || 0],
                 backgroundColor: [
                     'rgba(16, 185, 129, 0.85)', // Esmeralda para Efectivo
                     'rgba(59, 130, 246, 0.85)', // Azul para Tarjeta
@@ -91,7 +92,7 @@ const Cobros = () => {
                     },
                     boxWidth: 12,
                     padding: 15,
-                    color: '#475569' // Color Slate 600
+                    color: '#475569' 
                 }
             },
             tooltip: {
@@ -135,20 +136,20 @@ const Cobros = () => {
                     <div className="divide-y divide-slate-50 text-xs font-bold text-slate-600 pt-2">
                         <div className="flex justify-between py-2 items-center">
                             <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"/> Efectivo:</span>
-                            <span className="text-slate-900">{statsCaja.EFECTIVO.toFixed(2)}€</span>
+                            <span className="text-slate-900">{(statsCaja.EFECTIVO || 0).toFixed(2)}€</span>
                         </div>
                         <div className="flex justify-between py-2 items-center">
                             <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"/> Tarjeta:</span>
-                            <span className="text-slate-900">{statsCaja.TARJETA.toFixed(2)}€</span>
+                            <span className="text-slate-900">{(statsCaja.TARJETA || 0).toFixed(2)}€</span>
                         </div>
                         <div className="flex justify-between py-2 items-center">
                             <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2.5 h-2.5 rounded-full bg-indigo-500"/> Bizum:</span>
-                            <span className="text-slate-900">{statsCaja.BIZUM.toFixed(2)}€</span>
+                            <span className="text-slate-900">{(statsCaja.BIZUM || 0).toFixed(2)}€</span>
                         </div>
                     </div>
                 </div>
 
-                {/* NUEVO PANEL: GRÁFICO CIRCULAR INTERACTIVO (DÓNUT) */}
+                {/* GRÁFICO CIRCULAR INTERACTIVO (DÓNUT) */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between min-h-[220px]">
                     <div className="mb-2">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Distribución de Ingresos</h3>
@@ -176,7 +177,6 @@ const Cobros = () => {
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <FiDollarSign className="text-indigo-500" /> Listas para Entrega
                     </h2>
-                    {/* Barra de Búsqueda Integrada */}
                     <div className="w-full sm:w-80 relative">
                         <FiSearch className="absolute left-4 top-3.5 text-slate-400" />
                         <input 
@@ -215,7 +215,7 @@ const Cobros = () => {
                                         <td className="px-8 py-5 text-sm font-bold text-slate-700">{order.cliente}</td>
                                         <td className="px-8 py-5 text-sm font-medium text-slate-600">{order.prenda}</td>
                                         <td className="px-8 py-5 text-sm text-slate-400">{order.servicio}</td>
-                                        <td className="px-8 py-5 text-sm font-black text-slate-900">{Number(order.total).toFixed(2)}€</td>
+                                        <td className="px-8 py-5 text-sm font-black text-slate-900">{Number(order.total || 0).toFixed(2)}€</td>
                                         <td className="px-8 py-3 text-center">
                                             <button
                                                 onClick={() => navigate(`/factura/${order.id_pedido}`)}
