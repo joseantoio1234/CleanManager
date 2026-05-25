@@ -141,7 +141,7 @@ app.post('/api/login', (req, res) => {
 
   // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA JEREZ)
   if (username === 'admin_jerez') {
-    console.log(`🎫 [BYPASS] Acceso de emergencia concedido para el Administrador de Jerez.`);
+    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Jerez.`);
     return res.json({
       id_usuario: 999,
       id_empresa: 1, 
@@ -153,7 +153,7 @@ app.post('/api/login', (req, res) => {
 
   // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA MÉRIDA - ID: 6)
   if (username === 'admin_merida') {
-    console.log(`🎫 [BYPASS] Acceso de emergencia concedido para el Administrador de Mérida.`);
+    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Mérida.`);
     return res.json({
       id_usuario: 888,
       id_empresa: 6, 
@@ -232,7 +232,7 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
       pedidosHoy: results[0].pedidosHoy || 0,
       enProceso: results[0].enProceso || 0,
       listosEntrega: results[0].listosEntrega || 0,
-      ingresosMes: Number(results[0].ingresosMes) || 0
+      ingressosMes: Number(results[0].ingresosMes) || 0
     });
   });
 });
@@ -264,7 +264,7 @@ app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
 // RUTA: CREAR NUEVO PEDIDO
 // ==========================================
 app.post('/api/orders', (req, res) => {
-  const { id_empresa, prenda, cliente, servicio, estado, total } = req.body;
+  const { id_empresa, prenda, cliente, servicio, total } = req.body;
 
   if (!id_empresa || !prenda || !cliente || !servicio || !total) {
     return res.status(400).json({ message: "Faltan campos obligatorios para crear el pedido." });
@@ -275,7 +275,7 @@ app.post('/api/orders', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(sql, [id_empresa, prenda, cliente, servicio, estado || 'SIN_EMPEZAR', total], (err, result) => {
+  db.query(sql, [id_empresa, prenda, cliente, servicio, 'SIN_EMPEZAR', total], (err, result) => {
     if (err) {
       console.error("❌ Error al insertar el pedido en MySQL:", err);
       return res.status(500).json({ message: "Error interno al guardar el pedido en el servidor local." });
@@ -290,14 +290,21 @@ app.post('/api/orders', (req, res) => {
 });
 
 // ==========================================
-// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (MÉTODO DINÁMICO 💳)
+// RUTA: ACTUALIZAR ESTADO DE PEDIDO + FACTURACIÓN (MÉTODO DINÁMICO BLINDADO 💳)
 // ==========================================
 app.put('/api/orders/:id_pedido/status', (req, res) => {
   const { id_pedido } = req.params;
-  const { estado, metodo_pago } = req.body; // 🚀 Recibimos el método de pago dinámico desde React
+  const { estado, metodo_pago } = req.body; 
 
   if (!estado) {
     return res.status(400).json({ message: "El nuevo estado es obligatorio." });
+  }
+
+  // 🚀 BLINDAJE DE SEGURIDAD INTERNO:
+  // Si cambia a estado ENTREGADO pero viene vacío el método de pago de la tabla, asume EFECTIVO para no colapsar
+  let metodoPagoFinal = metodo_pago;
+  if (estado === 'ENTREGADO' && !metodoPagoFinal) {
+    metodoPagoFinal = 'EFECTIVO';
   }
 
   db.beginTransaction((err) => {
@@ -350,19 +357,20 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 
           const { total, id_empresa, anio_actual } = pedidoData[0];
 
+          // 🚀 CORREGIDO: Consulta global usando MAX para evitar pisar la numeración única de otras empresas
           const sqlLastNum = `
-            SELECT num_factura FROM factura 
-            WHERE id_empresa = ? AND num_factura LIKE ? 
-            ORDER BY id_factura DESC LIMIT 1
+            SELECT MAX(num_factura) as last_num FROM factura 
+            WHERE num_factura LIKE ?
           `;
-          db.query(sqlLastNum, [id_empresa, `FS-${anio_actual}-%`], (err, lastFactura) => {
+          db.query(sqlLastNum, [`FS-${anio_actual}-%`], (err, lastFactura) => {
             if (err) {
               return db.rollback(() => res.status(500).json({ message: "Error calculando serie correlativa." }));
             }
 
+            // 🚀 CORREGIDO: Mapeo robusto sobre el alias 'last_num' global
             let nuevoContador = 1;
-            if (lastFactura.length > 0) {
-              const partes = lastFactura[0].num_factura.split('-');
+            if (lastFactura.length > 0 && lastFactura[0].last_num) {
+              const partes = lastFactura[0].last_num.split('-');
               nuevoContador = parseInt(partes[2]) + 1;
             }
 
@@ -372,14 +380,13 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
             const baseImponible = totalFacturado / 1.21;
             const importeIva = totalFacturado - baseImponible;
 
-            // 🚀 CORREGIDO: Cambiamos 'EFECTIVO' rígido por el marcador (?) dinámico
             const sqlInsertFactura = `
               INSERT INTO factura (id_pedido, id_empresa, num_factura, base_imponible, importe_iva, total_facturado, metodo_pago)
               VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
 
-            // 🚀 CORREGIDO: Se inyecta metodo_pago enviado por el operario (Falla de respaldo: 'EFECTIVO')
-            db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado, metodo_pago || 'EFECTIVO'], (err, resultInsert) => {
+            // Inyecta el método de pago final blindado
+            db.query(sqlInsertFactura, [id_pedido, id_empresa, numFacturaFormateado, baseImponible, importeIva, totalFacturado, metodoPagoFinal], (err, resultInsert) => {
               if (err) {
                 return db.rollback(() => {
                   console.error("❌ Error al insertar en tabla factura:", err);
@@ -391,7 +398,7 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
                 if (err) {
                   return db.rollback(() => res.status(500).json({ message: "Error al consolidar factura." }));
                 }
-                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido} via [${metodo_pago || 'EFECTIVO'}]`);
+                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido} via [${metodoPagoFinal}]`);
                 return res.json({ message: "Pedido entregado y factura legal correlativa generada." });
               });
             });
@@ -793,9 +800,8 @@ app.get('/api/admin/facturas/:id_empresa', (req, res) => {
   });
 });
 
-
 // ==========================================
-// RUTA MOSTRADOR: BUSCAR TELÉFONO DE CLIENTE EXISTENTE (SaaS 🔒)
+// BUSCAR TELÉFONO DE CLIENTE EXISTENTE (GET)
 // ==========================================
 app.get('/api/clientes/buscar-telefono', (req, res) => {
   const { id_empresa, nombre_cliente } = req.query;
@@ -804,7 +810,6 @@ app.get('/api/clientes/buscar-telefono', (req, res) => {
     return res.status(400).json({ message: "Faltan parámetros de búsqueda." });
   }
 
-  // Buscamos el último pedido de ese cliente en esa empresa específica para obtener su teléfono
   const sql = `
     SELECT telefono 
     FROM pedido 
@@ -815,7 +820,7 @@ app.get('/api/clientes/buscar-telefono', (req, res) => {
 
   db.query(sql, [id_empresa, nombre_cliente.trim()], (err, results) => {
     if (err) {
-      console.error("❌ Error al buscar teléfono del cliente en MySQL:", err);
+      console.error("❌ Error al buscar teléfono en MySQL:", err);
       return res.status(500).json({ message: "Error interno en el servidor." });
     }
 
@@ -826,7 +831,6 @@ app.get('/api/clientes/buscar-telefono', (req, res) => {
     }
   });
 });
-
 
 // Iniciar el servidor en el puerto 5000
 const PORT = 5000;

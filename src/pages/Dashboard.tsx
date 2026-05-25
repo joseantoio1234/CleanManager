@@ -122,11 +122,12 @@ const Dashboard = () => {
         INGRESOS: 'Desglose de Caja / Ingresos Cobrados'
     }[activeModal || 'HOY'];
 
+    // 🚀 BLINDADO: En el campo value aplicamos Number() preventivo
     const statsConfig = [
         { id: 'HOY' as const, label: 'Pedidos Hoy', value: `${statsData.pedidosHoy}`, icon: <FiBox />, color: 'bg-blue-500' },
         { id: 'PROCESO' as const, label: 'En Proceso', value: `${statsData.enProceso}`, icon: <FiClock />, color: 'bg-amber-500' },
         { id: 'LISTOS' as const, label: 'Listos para Entrega', value: `${statsData.listosEntrega}`, icon: <FiCheckCircle />, color: 'bg-emerald-500' },
-        { id: 'INGRESOS' as const, label: 'Ingresos Mes', value: `${statsData.ingresosMes.toFixed(2)}€`, icon: <FiTrendingUp />, color: 'bg-indigo-500' },
+        { id: 'INGRESOS' as const, label: 'Ingresos Mes', value: `${Number(statsData.ingresosMes || 0).toFixed(2)}€`, icon: <FiTrendingUp />, color: 'bg-indigo-500' },
     ];
 
     return (
@@ -240,7 +241,10 @@ const Dashboard = () => {
                                                     <option value="ENTREGADO">Entregado</option>
                                                 </select>
                                             </td>
-                                            <td className="px-8 py-5 text-sm font-bold text-slate-900">{Number(order.total).toFixed(2)}€</td>
+                                            {/* 🚀 CORREGIDO: Parseo seguro Number() para evitar el colapso de .toFixed() si total es nulo */}
+                                            <td className="px-8 py-5 text-sm font-bold text-slate-900">
+                                                {Number(order.total || 0).toFixed(2)}€
+                                            </td>
                                             
                                             <td className="px-8 py-3 text-center">
                                                 <button
@@ -315,7 +319,10 @@ const Dashboard = () => {
                                                             {order.estado === 'ACABADO' ? 'Listo para entregar' : order.estado.replace('_', ' ')}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-xs font-black text-slate-900 text-right">{Number(order.total).toFixed(2)}€</td>
+                                                    {/* 🚀 CORREGIDO: Parseo seguro Number() también en la tabla del modal */}
+                                                    <td className="px-6 py-4 text-xs font-black text-slate-900 text-right">
+                                                        {Number(order.total || 0).toFixed(2)}€
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>

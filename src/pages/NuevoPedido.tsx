@@ -9,7 +9,7 @@ import { authRepository } from '../database/repositories/auth.repository';
 interface PrendaCatalogo {
   id_prenda: number;
   nombre_prenda: string;
-  precio_base: any; // Lo dejamos flexible por si viene como string desde la API
+  precio_base: any; // Flexible por si viene como string desde la API
 }
 
 const NuevoPedido = () => {
@@ -61,7 +61,7 @@ const NuevoPedido = () => {
         } else {
           const prendaSeleccionada = listaPrendas.find(p => p.nombre_prenda === value);
           if (prendaSeleccionada) {
-            // 🚀 PARSEO SEGURO: Convertimos a número antes de usar .toFixed() para evitar el error
+            // PARSEO SEGURO: Convertimos a número antes de usar .toFixed() para evitar el error de pantalla blanca
             const precioNumerico = Number(prendaSeleccionada.precio_base) || 0;
             nuevoEstado.total = precioNumerico.toFixed(2);
           } else {
@@ -135,6 +135,28 @@ const NuevoPedido = () => {
                   name="cliente"
                   value={formData.cliente}
                   onChange={handleChange}
+                  
+                  // 🚀 CONECTADO AL GET ACTUALIZADO:onBlur realiza la petición pasándole todo limpio en la URL
+                  onBlur={async () => {
+                    if (!formData.cliente.trim()) return;
+                    try {
+                      const idEmpresa = localStorage.getItem('id_empresa') || '1';
+                      const response = await fetch(
+                        `http://localhost:5000/api/clientes/buscar-telefono?id_empresa=${idEmpresa}&nombre_cliente=${encodeURIComponent(formData.cliente)}`
+                      );
+                      
+                      if (response.ok) {
+                        const data = await response.json();
+                        // Si el cliente existe con teléfono en tu base de datos, lo inyecta automáticamente
+                        if (data.existe && data.telefono) {
+                          setFormData(prev => ({ ...prev, telefono: data.telefono }));
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Error al auto-consultar el teléfono del cliente:", error);
+                    }
+                  }}
+
                   placeholder="Ej: Maria García" 
                   required 
                   className="rounded-xl border-slate-100 bg-slate-50/50" 
@@ -173,7 +195,7 @@ const NuevoPedido = () => {
                 >
                   <option value="">Selecciona la prenda...</option>
                   
-                  {/* 🚀 PARSEO SEGURO: Convertimos a número también en el mapeo de las opciones */}
+                  {/* Mapeo seguro con parseo de números */}
                   {listaPrendas.map((item) => {
                     const precioNumerico = Number(item.precio_base) || 0;
                     return (
@@ -183,7 +205,7 @@ const NuevoPedido = () => {
                     );
                   })}
                   
-                  {/* Comodín de Emergencia para artículos raros */}
+                  {/* Comodín de Emergencia */}
                   <option value="Varios">-- [Prenda Comodín / Especial Varios] --</option>
                 </select>
               </div>
@@ -208,7 +230,7 @@ const NuevoPedido = () => {
                 </select>
               </div>
 
-              {/* Importe Total (Auto-rellenado o Manual si es 'Varios') */}
+              {/* Importe Total (Auto-rellenado) */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Importe Total (€)</label>
                 <Input 
