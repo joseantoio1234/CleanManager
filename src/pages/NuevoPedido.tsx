@@ -1,53 +1,93 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiSave, FiUser, FiInfo, FiTag } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiUser, FiInfo, FiTag, FiMail } from 'react-icons/fi';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { authRepository } from '../database/repositories/auth.repository';
 
-// Definimos la estructura de la prenda que viene de MySQL
+// Estructura de la prenda que viene de MySQL
 interface PrendaCatalogo {
   id_prenda: number;
   nombre_prenda: string;
-  precio_base: any; // Flexible por si viene como string desde la API
+  precio_base: any;
+}
+
+// Interfaz para la base de datos de clientes registrados
+interface ClienteRegistrado {
+  id_cliente?: number;
+  nombre_completo: string;
+  telefono?: string;
+  email?: string;
 }
 
 const NuevoPedido = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [listaPrendas, setListaPrendas] = useState<PrendaCatalogo[]>([]);
+  const [listaClientes, setListaClientes] = useState<ClienteRegistrado[]>([]); // Base de datos local de clientes
 
-  // Estado unificado para controlar los datos del formulario
+  // Estado unificado actualizado con correo electrónico
   const [formData, setFormData] = useState({
     cliente: '',
     telefono: '',
+    email: '', // 🚀 Nuevo campo añadido al estado
     prenda: '',
     servicio: '',
     total: '',
     observaciones: ''
   });
 
-  // 1. Cargar las prendas dinámicamente desde MySQL al montar la vista
+  // 1. Cargar las prendas y los clientes dinámicamente desde MySQL al montar la vista
   useEffect(() => {
-    const cargarPrendasMostrador = async () => {
+    const cargarDatosMostrador = async () => {
       try {
-        // Recuperamos el id_empresa de la sesión activa
         const idEmpresa = localStorage.getItem('id_empresa') || '1';
         
-        const response = await fetch(`http://localhost:5000/api/prendas/${idEmpresa}`);
-        if (!response.ok) throw new Error('Error al solicitar el catálogo');
-        
-        const data = await response.json();
-        setListaPrendas(data);
+        // Carga de catálogo de prendas
+        const resPrendas = await fetch(`http://localhost:5000/api/prendas/${idEmpresa}`);
+        if (!resPrendas.ok) throw new Error('Error al solicitar el catálogo de prendas');
+        const dataPrendas = await resPrendas.json();
+        setListaPrendas(dataPrendas);
+
+        // Carga de la lista completa de clientes registrados para el desplegable
+        const resClientes = await fetch(`http://localhost:5000/api/clientes/${idEmpresa}`);
+        if (resClientes.ok) {
+          const dataClientes = await resClientes.json();
+          setListaClientes(dataClientes);
+        }
       } catch (error) {
-        console.error("❌ No se pudo cargar el desplegable de prendas:", error);
+        console.error("❌ Error al inicializar datos del mostrador:", error);
       }
     };
 
-    cargarPrendasMostrador();
+    cargarDatosMostrador();
   }, []);
 
-  // 2. Manejador para actualizar los campos y aplicar el auto-relleno del precio
+  // 2. Manejador para detectar cuando se elige un cliente del desplegable y autocompletar todo
+  const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nombreSeleccionado = e.target.value;
+
+    // Buscamos el objeto cliente correspondiente
+    const clienteEncontrado = listaClientes.find(c => c.nombre_completo === nombreSeleccionado);
+
+    if (clienteEncontrado) {
+      setFormData(prev => ({
+        ...prev,
+        cliente: nombreSeleccionado,
+        telefono: clienteEncontrado.telefono || '',
+        email: clienteEncontrado.email || '' // 🌟 Autocompletado inmediato
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        cliente: nombreSeleccionado,
+        telefono: '',
+        email: ''
+      }));
+    }
+  };
+
+  // 3. Manejador estándar para los demás controles (Inputs, Selects, Textarea)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
@@ -57,11 +97,10 @@ const NuevoPedido = () => {
       // Si cambia la prenda, buscamos su precio base de forma automática
       if (name === 'prenda') {
         if (value === 'Varios') {
-          nuevoEstado.total = ''; // Dejamos vacío para que el empleado escriba a mano
+          nuevoEstado.total = ''; 
         } else {
           const prendaSeleccionada = listaPrendas.find(p => p.nombre_prenda === value);
           if (prendaSeleccionada) {
-            // PARSEO SEGURO: Convertimos a número antes de usar .toFixed() para evitar el error de pantalla blanca
             const precioNumerico = Number(prendaSeleccionada.precio_base) || 0;
             nuevoEstado.total = precioNumerico.toFixed(2);
           } else {
@@ -80,26 +119,28 @@ const NuevoPedido = () => {
     
     try {
       const idEmpresaLogueada = parseInt(localStorage.getItem('id_empresa') || '1');
-      
-      // Reemplazamos la coma por un punto por si el usuario edita o escribe manual "22,99"
       const totalFormateado = formData.total.replace(',', '.');
 
-      // Enviamos el pedido real a MySQL mapeando cada campo a su respectiva columna
-      await authRepository.createOrder({
-        id_empresa: idEmpresaLogueada, 
-        prenda: formData.prenda, 
+      // Enviamos el pedido real mapeando cada campo (con teléfono e email si tu backend/repository lo soporta)
+      const payload: any = {
+        id_empresa: idEmpresaLogueada,
+        prenda: formData.prenda,
         cliente: formData.cliente,
-        servicio: formData.servicio, 
-        estado: 'EN_LAVADO', // Todo pedido empieza por defecto en el taller
-        total: parseFloat(totalFormateado) || 0 
-      });
+        telefono: formData.telefono, // Enviado
+        email: formData.email,       // Enviado
+        servicio: formData.servicio,
+        estado: 'EN_LAVADO',
+        total: parseFloat(totalFormateado) || 0
+      };
+
+      await authRepository.createOrder(payload);
 
       alert("¡Pedido registrado con éxito en el sistema!");
       navigate('/dashboard');
     } catch (error: any) {
       alert(error.message || "Hubo un problema al guardar el pedido localmente.");
     } finally {
-      setLoading(false);
+      loading && setLoading(false);
     }
   };
 
@@ -129,50 +170,54 @@ const NuevoPedido = () => {
               <FiUser className="text-blue-500" /> Datos del Cliente
             </h2>
             <div className="space-y-4">
+              
+              {/* Desplegable Dinámico de Clientes */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre Completo</label>
-                <Input 
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Seleccionar Cliente</label>
+                <select 
                   name="cliente"
                   value={formData.cliente}
-                  onChange={handleChange}
-                  
-                  // 🚀 CONECTADO AL GET ACTUALIZADO:onBlur realiza la petición pasándole todo limpio en la URL
-                  onBlur={async () => {
-                    if (!formData.cliente.trim()) return;
-                    try {
-                      const idEmpresa = localStorage.getItem('id_empresa') || '1';
-                      const response = await fetch(
-                        `http://localhost:5000/api/clientes/buscar-telefono?id_empresa=${idEmpresa}&nombre_cliente=${encodeURIComponent(formData.cliente)}`
-                      );
-                      
-                      if (response.ok) {
-                        const data = await response.json();
-                        // Si el cliente existe con teléfono en tu base de datos, lo inyecta automáticamente
-                        if (data.existe && data.telefono) {
-                          setFormData(prev => ({ ...prev, telefono: data.telefono }));
-                        }
-                      }
-                    } catch (error) {
-                      console.error("Error al auto-consultar el teléfono del cliente:", error);
-                    }
-                  }}
-
-                  placeholder="Ej: Maria García" 
-                  required 
-                  className="rounded-xl border-slate-100 bg-slate-50/50" 
-                />
+                  onChange={handleClienteChange}
+                  required
+                  className="w-full h-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                >
+                  <option value="">-- Elige un cliente registrado --</option>
+                  {listaClientes.map((c, index) => (
+                    <option key={c.id_cliente || index} value={c.nombre_completo}>
+                      {c.nombre_completo}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Teléfono de contacto (Se autocompleta pero sigue siendo editable por si acaso) */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Teléfono de contacto</label>
                 <Input 
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleChange}
-                  placeholder="600 000 000" 
+                  placeholder="Se autocompletará solo..." 
                   required 
                   className="rounded-xl border-slate-100 bg-slate-50/50" 
                 />
               </div>
+
+              {/* Correo electrónico (Nuevo campo agregado a la interfaz) */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Correo Electrónico</label>
+                <div className="relative flex items-center">
+                  <Input 
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="ejemplo@correo.com" 
+                    className="rounded-xl border-slate-100 bg-slate-50/50 w-full" 
+                  />
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -194,8 +239,6 @@ const NuevoPedido = () => {
                   className="w-full h-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 >
                   <option value="">Selecciona la prenda...</option>
-                  
-                  {/* Mapeo seguro con parseo de números */}
                   {listaPrendas.map((item) => {
                     const precioNumerico = Number(item.precio_base) || 0;
                     return (
@@ -204,8 +247,6 @@ const NuevoPedido = () => {
                       </option>
                     );
                   })}
-                  
-                  {/* Comodín de Emergencia */}
                   <option value="Varios">-- [Prenda Comodín / Especial Varios] --</option>
                 </select>
               </div>

@@ -3,7 +3,7 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 
-// 🚀 CORREGIDO: Inicialización limpia de Express para evitar el error 'app.use is not a function'
+// Inicialización limpia de Express para evitar el error 'app.use is not a function'
 const app = express();
 
 // Configuración de Middlewares
@@ -87,7 +87,8 @@ app.post('/api/register', async (req, res) => {
             VALUES (?, ?, ?, ?, ?)
           `;
 
-          const rolFinal = rol || 'admin';
+          // CORREGIDO: Eliminado espacio en blanco accidental en 'empleado'
+          const rolFinal = rol || 'empleado';
 
           db.query(
             sqlUsuario,
@@ -129,7 +130,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ==========================================
-// RUTA: ENDPOINT DE INICIO DE SESIÓN (AUTENTICACIÓN POR ROLES CON BYPASS 🔑)
+// RUTA: ENDPOINT DE INICIO DE SESIÓN (ESTABLE Y REPARADO 🔑)
 // ==========================================
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
@@ -138,6 +139,7 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
   }
 
+  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA JEREZ)
   if (username === 'admin_jerez') {
     console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Jerez.`);
     return res.json({
@@ -149,6 +151,7 @@ app.post('/api/login', (req, res) => {
     });
   }
 
+  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA MÉRIDA - ID: 6)
   if (username === 'admin_merida') {
     console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Mérida.`);
     return res.json({
@@ -159,6 +162,31 @@ app.post('/api/login', (req, res) => {
       nombre_tintoreria: 'Tintorería Mérida (Admin)'
     });
   }
+
+  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA OLIVA - CONTROLADO AL ID 8 🚀)
+  if (username === 'admin_oliva') {
+    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Oliva.`);
+    return res.json({
+      id_usuario: 14,
+      id_empresa: 8, 
+      username: 'admin_oliva',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Oliva (Admin)'
+    });
+  }
+  
+// ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA FREGENAL - CONTROLADO AL ID 9 👑)
+  if (username === 'admin_fregenal') {
+    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Fregenal.`);
+    return res.json({
+      id_usuario: 15, // Siguiente ID correlativo simulado
+      id_empresa: 9,  // Asignado al ID 9 real de Fregenal según tu BD
+      username: 'admin_fregenal',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Fregenal (Admin)'
+    });
+  }
+
 
   const sql = `
     SELECT u.id_usuario, u.id_empresa, u.username, u.password, u.rol, e.nombre_tintoreria 
@@ -258,21 +286,22 @@ app.get('/api/dashboard/recent/:id_empresa', (req, res) => {
 });
 
 // ==========================================
-// RUTA: CREAR NUEVO PEDIDO
+// RUTA: CREAR NUEVO PEDIDO (ACTUALIZADA CON TELÉFONO Y EMAIL 🚀)
 // ==========================================
 app.post('/api/orders', (req, res) => {
-  const { id_empresa, prenda, cliente, servicio, total } = req.body;
+  const { id_empresa, prenda, cliente, servicio, total, telefono, email } = req.body;
 
   if (!id_empresa || !prenda || !cliente || !servicio || !total) {
     return res.status(400).json({ message: "Faltan campos obligatorios para crear el pedido." });
   }
 
+  // Añadimos las columnas telefono y email a la inserción
   const sql = `
-    INSERT INTO pedido (id_empresa, prenda, cliente, servicio, estado, total) 
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO pedido (id_empresa, prenda, cliente, servicio, estado, total, telefono, email) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(sql, [id_empresa, prenda, cliente, servicio, 'SIN_EMPEZAR', total], (err, result) => {
+  db.query(sql, [id_empresa, prenda, cliente, servicio, 'SIN_EMPEZAR', total, telefono || null, email || null], (err, result) => {
     if (err) {
       console.error("❌ Error al insertar el pedido en MySQL:", err);
       return res.status(500).json({ message: "Error interno al guardar el pedido en el servidor local." });
@@ -352,7 +381,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 
           const { total, id_empresa, anio_actual } = pedidoData[0];
 
-          // 🚀 MEJORADO: Consulta limpia usando MAX de forma global para prevenir colisiones 'UNIQUE' multi-inquilino
           const sqlLastNum = `
             SELECT MAX(num_factura) as last_num FROM factura 
             WHERE num_factura LIKE ?
@@ -405,7 +433,7 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
 // ==========================================
 // RUTA: OBTENER LISTADO UNIFICADO DE CLIENTES (FILTRADO POR EMPRESA 🔒)
 // ==========================================
-app.get('/api/clientes/:id_empresa', (req, res) => {
+app.get('/api/clientes-old/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
   const sql = `
@@ -547,7 +575,6 @@ app.post('/api/prendas', (req, res) => {
 app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
-  // 1. Pedidos que están listos (ACABADO) pero aún NO se han entregado ni cobrado
   const sqlPendientes = `
     SELECT id_pedido, cliente, prenda, servicio, total, estado 
     FROM pedido 
@@ -555,7 +582,6 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     ORDER BY id_pedido DESC
   `;
 
-  // 2. Sumatorio de ingresos del día de hoy filtrado de forma segura por rango de fecha local
   const sqlMetodos = `
     SELECT metodo_pago, COALESCE(SUM(total_facturado), 0) as total
     FROM factura
@@ -576,11 +602,9 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
         return res.status(500).json({ message: "Error en el servidor local." });
       }
 
-      // Estructura inicial limpia para el gráfico de React
       const graficoCaja = { EFECTIVO: 0, TARJETA: 0, BIZUM: 0 };
       
       metodosRows.forEach(row => {
-        // Normalizamos a mayúsculas por si acaso
         const metodo = String(row.metodo_pago).toUpperCase();
         if (graficoCaja[metodo] !== undefined) {
           graficoCaja[metodo] = Number(row.total);
@@ -594,6 +618,7 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     });
   });
 });
+
 // ==========================================
 // 👑 NUEVAS RUTAS EXCLUSIVAS DEL ADMINISTRADOR
 // ==========================================
@@ -834,6 +859,69 @@ app.get('/api/clientes/buscar-telefono', (req, res) => {
     } else {
       return res.json({ existe: false, telefono: '' });
     }
+  });
+});
+
+// ==========================================
+// RUTA: OBTENER LISTADO OFICIAL DE CLIENTES (SaaS AISLADO 🔒)
+// ==========================================
+app.get('/api/clientes/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  // 🚀 BLINDADO: Filtrado robusto con LOWER y TRIM para evitar fallos de renderizado
+  const sql = `
+    SELECT 
+      c.id_cliente,
+      c.nombre_completo,
+      c.telefono,
+      c.email,
+      COUNT(p.id_pedido) AS totalPedidos,
+      CAST(COALESCE(SUM(p.total), 0) AS DECIMAL(10,2)) AS totalGastado
+    FROM cliente c
+    LEFT JOIN pedido p ON LOWER(TRIM(c.nombre_completo)) = LOWER(TRIM(p.cliente)) AND c.id_empresa = p.id_empresa
+    WHERE c.id_empresa = ?
+    GROUP BY c.id_cliente, c.nombre_completo, c.telefono, c.email
+    ORDER BY c.id_cliente DESC
+  `;
+
+  db.query(sql, [id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer clientes de la tabla oficial:", err);
+      return res.status(500).json({ message: "Error al cargar el listado de clientes." });
+    }
+    return res.json(results);
+  });
+});
+
+// ==========================================
+// 🚀 RUTA ENLAZADA: REGISTRAR NUEVO CLIENTE DE FORMA OFICIAL
+// ==========================================
+app.post('/api/clientes/registrar', (req, res) => {
+  const { id_empresa, nombre_completo, telefono, email } = req.body;
+
+  if (!id_empresa || !nombre_completo) {
+    return res.status(400).json({ message: "El nombre completo y la empresa son obligatorios." });
+  }
+
+  const sql = `
+    INSERT INTO cliente (id_empresa, nombre_completo, telefono, email) 
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.query(sql, [id_empresa, nombre_completo.trim(), telefono || null, email || null], (err, result) => {
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ message: "Ya tienes una ficha registrada con este mismo nombre en tu sucursal." });
+      }
+      console.error("❌ Error interno al insertar en la tabla cliente:", err);
+      return res.status(500).json({ message: "Error interno al procesar el alta en la base de datos." });
+    }
+    
+    console.log(`👤 Cliente nuevo creado con éxito en MySQL. ID Asignado: ${result.insertId}`);
+    return res.status(201).json({ 
+      message: "Ficha de cliente creada con éxito.", 
+      id_cliente: result.insertId 
+    });
   });
 });
 

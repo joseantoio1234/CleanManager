@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiDollarSign, FiSearch, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
+import { FiArrowLeft, FiDollarSign, FiSearch, FiMail, FiMessageCircle, FiTrendingUp } from 'react-icons/fi';
 
 // Importaciones necesarias de Chart.js y el componente adaptador de React
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -15,6 +15,8 @@ interface PedidoListo {
     prenda: string;
     servicio: string;
     total: number;
+    // Añadimos opcionalmente el teléfono si tu consulta del backend lo incluye en el futuro
+    telefono?: string; 
 }
 
 const Cobros = () => {
@@ -24,7 +26,7 @@ const Cobros = () => {
     const [statsCaja, setStatsCaja] = useState({ EFECTIVO: 0, TARJETA: 0, BIZUM: 0 });
     const [loading, setLoading] = useState(true);
 
-    // 🚀 CORREGIDO: Extraemos el id_empresa real del inicio de sesión activo
+    // Extraemos el id_empresa real de la sesión activa
     const idEmpresaActive = localStorage.getItem('id_empresa') || '1';
 
     const cargarCaja = async () => {
@@ -46,6 +48,29 @@ const Cobros = () => {
         cargarCaja();
     }, [idEmpresaActive]);
 
+    // LÓGICA DE NOTIFICACIONES AUTOMÁTICAS DINÁMICAS
+    const enviarNotificacionWhatsApp = (order: PedidoListo) => {
+        // Redactamos el mensaje comercial de aviso pulcro
+        const mensaje = `Hola ${order.cliente}, le informamos desde su Tintorería que su pedido de "${order.prenda}" (${order.servicio}) ya se encuentra totalmente listo para ser retirado en nuestro mostrador. El importe total es de ${Number(order.total).toFixed(2)}€. ¡Le esperamos!`;
+        
+        // Si no tenemos el teléfono del cliente mapeado en este objeto, usamos un marcador para que el operario lo complete en la app web de destino
+        const numeroTelefono = order.telefono ? order.telefono.replace(/\s+/g, '') : '';
+        
+        // Construimos la URL universal de WhatsApp
+        const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroTelefono}&text=${encodeURIComponent(mensaje)}`;
+        
+        // Abrimos en una pestaña nueva del navegador de forma segura
+        window.open(urlWhatsApp, '_blank');
+    };
+
+    const enviarNotificacionEmail = (order: PedidoListo) => {
+        const asunto = encodeURIComponent(`Su pedido de Tintorería ya está listo para recoger`);
+        const cuerpo = encodeURIComponent(`Estimado/a ${order.cliente},\n\nLe escribimos para notificarle que su encargo de "${order.prenda}" asignado al tratamiento de "${order.servicio}" ya ha pasado el control de calidad en nuestros talleres y está disponible para retirada en el mostrador principal.\n\nImporte pendiente de cobro: ${Number(order.total).toFixed(2)}€.\n\nGracias por su confianza.`);
+        
+        // Disparamos el gestor de correo local del sistema operativo
+        window.location.href = `mailto:?subject=${asunto}&body=${cuerpo}`;
+    };
+
     // Filtrado dinámico por buscador
     const pedidosFiltrados = listaPendientes.filter(p => 
         p.cliente.toLowerCase().includes(busqueda.toLowerCase()) || 
@@ -54,18 +79,15 @@ const Cobros = () => {
 
     const totalRecaudadoHoy = (statsCaja.EFECTIVO || 0) + (statsCaja.TARJETA || 0) + (statsCaja.BIZUM || 0);
 
-    // ==========================================
-    // CONFIGURACIÓN ESTRUCTURAL DEL GRÁFICO (DÓNUT)
-    // ==========================================
     const dataGrafico = {
         labels: ['Efectivo', 'Tarjeta', 'Bizum'],
         datasets: [
             {
                 data: [statsCaja.EFECTIVO || 0, statsCaja.TARJETA || 0, statsCaja.BIZUM || 0],
                 backgroundColor: [
-                    'rgba(16, 185, 129, 0.85)', // Esmeralda para Efectivo
-                    'rgba(59, 130, 246, 0.85)', // Azul para Tarjeta
-                    'rgba(99, 102, 241, 0.85)'  // Índigo para Bizum
+                    'rgba(16, 185, 129, 0.85)', 
+                    'rgba(59, 130, 246, 0.85)', 
+                    'rgba(99, 102, 241, 0.85)'  
                 ],
                 borderColor: [
                     '#10b981', 
@@ -120,7 +142,7 @@ const Cobros = () => {
                 </button>
             </div>
 
-            {/* SECCIÓN SUPERIOR: Resumen de Caja y Gráfico Circular de Distribución */}
+            {/* SECCIÓN SUPERIOR: Resumen de Caja y Gráfico */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Métricas rápidas */}
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
@@ -156,11 +178,10 @@ const Cobros = () => {
                         <p className="text-xs text-slate-400">Proporción visual de la recaudación según el medio de pago del mostrador.</p>
                     </div>
 
-                    {/* Contenedor del Canvas de Chart.js */}
                     <div className="relative flex-1 h-36 max-h-[150px] w-full flex justify-center lg:justify-start items-center">
                         {totalRecaudadoHoy === 0 ? (
                             <div className="text-center w-full text-xs text-slate-400 font-medium py-8">
-                                No se registran transacciones cobradas hoy para estructurar el gráfico.
+                                No se registran transacciones cobradas hoy para para estructurar el gráfico.
                             </div>
                         ) : (
                             <div className="w-full h-full max-w-[280px]">
@@ -205,7 +226,7 @@ const Cobros = () => {
                                     <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Prenda / Ropa</th>
                                     <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Servicio</th>
                                     <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Importe</th>
-                                    <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-center">Acción</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-center">Notificar Cliente</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -216,13 +237,28 @@ const Cobros = () => {
                                         <td className="px-8 py-5 text-sm font-medium text-slate-600">{order.prenda}</td>
                                         <td className="px-8 py-5 text-sm text-slate-400">{order.servicio}</td>
                                         <td className="px-8 py-5 text-sm font-black text-slate-900">{Number(order.total || 0).toFixed(2)}€</td>
+                                        
+                                        {/* 🚀 BOTONES DE ACCIÓN MEJORADOS PARA AVISO DIRECTO */}
                                         <td className="px-8 py-3 text-center">
-                                            <button
-                                                onClick={() => navigate(`/factura/${order.id_pedido}`)}
-                                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 mx-auto"
-                                            >
-                                                <FiCheckCircle /> Cobrar y Entregar
-                                            </button>
+                                            <div className="inline-flex gap-2">
+                                                {/* Botón WhatsApp */}
+                                                <button
+                                                    onClick={() => enviarNotificacionWhatsApp(order)}
+                                                    title="Notificar por WhatsApp Web"
+                                                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-md shadow-emerald-100 transition-all active:scale-95 flex items-center gap-1.5"
+                                                >
+                                                    <FiMessageCircle className="text-sm" /> WhatsApp
+                                                </button>
+                                                
+                                                {/* Botón Correo Electrónico */}
+                                                <button
+                                                    onClick={() => enviarNotificacionEmail(order)}
+                                                    title="Notificar por Email"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center gap-1.5"
+                                                >
+                                                    <FiMail className="text-sm" /> Correo
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
