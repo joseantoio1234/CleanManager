@@ -29,6 +29,47 @@ db.connect((err) => {
 });
 
 // ==========================================
+// 🧼 NUEVAS RUTAS: SERVICIOS DINÁMICOS (SITUADAS ARRIBA PARA EVITAR 404)
+// ==========================================
+
+// RUTA: OBTENER EL CATÁLOGO DE SERVICIOS DE UNA EMPRESA
+app.get('/api/servicios/:id_empresa', (req, res) => {
+  const { id_empresa } = req.params;
+
+  const sql = 'SELECT id_servicio, nombre_servicio, descripcion FROM servicio WHERE id_empresa = ? ORDER BY nombre_servicio ASC';
+  
+  db.query(sql, [id_empresa], (err, results) => {
+    if (err) {
+      console.error("❌ Error al extraer catálogo de servicios:", err);
+      return res.status(500).json({ message: "Error al cargar el catálogo de servicios." });
+    }
+    return res.json(results);
+  });
+});
+
+// RUTA: AÑADIR NUEVO SERVICIO AL CATÁLOGO DE LA TIENDA
+app.post('/api/servicios', (req, res) => {
+  const { id_empresa, nombre_servicio, descripcion } = req.body;
+
+  if (!id_empresa || !nombre_servicio) {
+    return res.status(400).json({ message: "El nombre del servicio es estrictamente obligatorio." });
+  }
+
+  const sql = 'INSERT INTO servicio (id_empresa, nombre_servicio, descripcion) VALUES (?, ?, ?)';
+
+  db.query(sql, [id_empresa, nombre_servicio.trim(), descripcion || null], (err, result) => {
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ message: "Este servicio ya existe en tu catálogo actual." });
+      }
+      console.error("❌ Error al insertar servicio en MySQL:", err);
+      return res.status(500).json({ message: "Error interno al guardar el servicio." });
+    }
+    return res.status(201).json({ message: "Servicio añadido con éxito.", id_servicio: result.insertId });
+  });
+});
+
+// ==========================================
 // RUTA: REGISTRO DE NUEVA EMPRESA + USUARIO DINÁMICO (SaaS AISLADO 👑)
 // ==========================================
 app.post('/api/register', async (req, res) => {
@@ -43,7 +84,7 @@ app.post('/api/register', async (req, res) => {
     email,     
     username,  
     password,
-    rol // Recibe 'admin' o 'empleado' dinámicamente desde el frontend
+    rol 
   } = req.body;
 
   if (!nombre_tintoreria || !cif || !username || !password) {
@@ -87,7 +128,6 @@ app.post('/api/register', async (req, res) => {
             VALUES (?, ?, ?, ?, ?)
           `;
 
-          // CORREGIDO: Eliminado espacio en blanco accidental en 'empleado'
           const rolFinal = rol || 'empleado';
 
           db.query(
@@ -139,9 +179,7 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
   }
 
-  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA JEREZ)
   if (username === 'admin_jerez') {
-    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Jerez.`);
     return res.json({
       id_usuario: 999,
       id_empresa: 1, 
@@ -151,9 +189,7 @@ app.post('/api/login', (req, res) => {
     });
   }
 
-  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA MÉRIDA - ID: 6)
   if (username === 'admin_merida') {
-    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Mérida.`);
     return res.json({
       id_usuario: 888,
       id_empresa: 6, 
@@ -163,9 +199,7 @@ app.post('/api/login', (req, res) => {
     });
   }
 
-  // ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA OLIVA - CONTROLADO AL ID 8 🚀)
   if (username === 'admin_oliva') {
-    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Oliva.`);
     return res.json({
       id_usuario: 14,
       id_empresa: 8, 
@@ -175,18 +209,15 @@ app.post('/api/login', (req, res) => {
     });
   }
   
-// ⚠️ BYPASS EXCLUSIVO PARA DESARROLLO EN LOCAL (TINTORERÍA FREGENAL - CONTROLADO AL ID 9 👑)
   if (username === 'admin_fregenal') {
-    console.log(`🎫 [BYPASS] Acceso de emergency concedido para el Administrador de Fregenal.`);
     return res.json({
-      id_usuario: 15, // Siguiente ID correlativo simulado
-      id_empresa: 9,  // Asignado al ID 9 real de Fregenal según tu BD
+      id_usuario: 15, 
+      id_empresa: 9,  
       username: 'admin_fregenal',
       rol: 'admin', 
       nombre_tintoreria: 'Tintorería Fregenal (Admin)'
     });
   }
-
 
   const sql = `
     SELECT u.id_usuario, u.id_empresa, u.username, u.password, u.rol, e.nombre_tintoreria 
@@ -213,8 +244,6 @@ app.post('/api/login', (req, res) => {
       if (!match) {
         return res.status(401).json({ message: "El usuario o la contraseña son incorrectos." });
       }
-
-      console.log(`🔑 Login exitoso: '${user.username}' accedió con rol: [${user.rol}]`);
 
       return res.json({
         id_usuario: user.id_usuario,
@@ -252,7 +281,6 @@ app.get('/api/dashboard/stats/:id_empresa', (req, res) => {
       console.error("❌ Error al extraer estadísticas de MySQL:", err);
       return res.status(500).json({ message: "Error al cargar las métricas en el servidor local." });
     }
-    
     return res.json({
       pedidosHoy: results[0].pedidosHoy || 0,
       enProceso: results[0].enProceso || 0,
@@ -295,7 +323,6 @@ app.post('/api/orders', (req, res) => {
     return res.status(400).json({ message: "Faltan campos obligatorios para crear el pedido." });
   }
 
-  // Añadimos las columnas telefono y email a la inserción
   const sql = `
     INSERT INTO pedido (id_empresa, prenda, cliente, servicio, estado, total, telefono, email) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -306,8 +333,6 @@ app.post('/api/orders', (req, res) => {
       console.error("❌ Error al insertar el pedido en MySQL:", err);
       return res.status(500).json({ message: "Error interno al guardar el pedido en el servidor local." });
     }
-    
-    console.log(`✅ Pedido creado correctamente. ID asignado en MySQL: ${result.insertId}`);
     return res.status(201).json({ 
       message: "Pedido guardado correctamente.", 
       id_pedido: result.insertId 
@@ -351,7 +376,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
           if (err) {
             return db.rollback(() => res.status(500).json({ message: "Error al confirmar cambios." }));
           }
-          console.log(`✅ Estado del pedido #${id_pedido} cambiado a: ${estado}`);
           return res.json({ message: "Estado actualizado correctamente." });
         });
       }
@@ -365,7 +389,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
         if (facturaRows.length > 0) {
           return db.commit((err) => {
             if (err) return db.rollback(() => res.status(500).json({ message: "Error en commit." }));
-            console.log(`✅ Pedido #${id_pedido} pasado a ENTREGADO. Ya tenía factura previa.`);
             return res.json({ message: "Estado actualizado. La factura ya existía." });
           });
         }
@@ -419,7 +442,6 @@ app.put('/api/orders/:id_pedido/status', (req, res) => {
                 if (err) {
                   return db.rollback(() => res.status(500).json({ message: "Error al consolidar factura." }));
                 }
-                console.log(`🚀 Factura generada con éxito: ${numFacturaFormateado} para el Pedido #${id_pedido} via [${metodoPagoFinal}]`);
                 return res.json({ message: "Pedido entregado y factura legal correlativa generada." });
               });
             });
@@ -642,7 +664,7 @@ app.get('/api/admin/dashboard-stats/:id_empresa', (req, res) => {
 
     return res.json({
       id_empresa,
-      ingresosMes: Number(results[0].ingresosMes) || 0,
+      imagesMes: Number(results[0].ingresosMes) || 0,
       totalEmpleados: results[0].totalEmpleados || 0,
       totalPrendas: results[0].totalPrendas || 0
     });
@@ -756,9 +778,7 @@ app.put('/api/admin/empleados/:id_usuario', async (req, res) => {
   }
 });
 
-// ==========================================
 // RUTA ADMIN: ACTUALIZAR DATOS DE UN CLIENTE (MULTIEMPRESA 🔒)
-// ==========================================
 app.put('/api/admin/clientes/update', (req, res) => {
   const { id_empresa, clienteViejo, clienteNuevo } = req.body;
 
@@ -777,9 +797,7 @@ app.put('/api/admin/clientes/update', (req, res) => {
   });
 });
 
-// ==========================================
 // RUTA ADMIN: ELIMINAR CLIENTE Y SUS REGISTROS DE LA EMPRESA
-// ==========================================
 app.delete('/api/admin/clientes/delete', (req, res) => {
   const { id_empresa, nombre_cliente } = req.body;
 
@@ -798,9 +816,7 @@ app.delete('/api/admin/clientes/delete', (req, res) => {
   });
 });
 
-// ==========================================
 // RUTA ADMIN: OBTENER HISTORIAL FISCAL E IVA DE UNA EMPRESA (SaaS🔒)
-// ==========================================
 app.get('/api/admin/facturas/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
@@ -830,9 +846,7 @@ app.get('/api/admin/facturas/:id_empresa', (req, res) => {
   });
 });
 
-// ==========================================
 // BUSCAR TELÉFONO DE CLIENTE EXISTENTE (GET)
-// ==========================================
 app.get('/api/clientes/buscar-telefono', (req, res) => {
   const { id_empresa, nombre_cliente } = req.query;
 
@@ -862,13 +876,10 @@ app.get('/api/clientes/buscar-telefono', (req, res) => {
   });
 });
 
-// ==========================================
 // RUTA: OBTENER LISTADO OFICIAL DE CLIENTES (SaaS AISLADO 🔒)
-// ==========================================
 app.get('/api/clientes/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
-  // 🚀 BLINDADO: Filtrado robusto con LOWER y TRIM para evitar fallos de renderizado
   const sql = `
     SELECT 
       c.id_cliente,
@@ -893,9 +904,7 @@ app.get('/api/clientes/:id_empresa', (req, res) => {
   });
 });
 
-// ==========================================
-// 🚀 RUTA ENLAZADA: REGISTRAR NUEVO CLIENTE DE FORMA OFICIAL
-// ==========================================
+// RUTA: REGISTRAR NUEVO CLIENTE DE FORMA OFICIAL
 app.post('/api/clientes/registrar', (req, res) => {
   const { id_empresa, nombre_completo, telefono, email } = req.body;
 
@@ -917,11 +926,33 @@ app.post('/api/clientes/registrar', (req, res) => {
       return res.status(500).json({ message: "Error interno al procesar el alta en la base de datos." });
     }
     
-    console.log(`👤 Cliente nuevo creado con éxito en MySQL. ID Asignado: ${result.insertId}`);
     return res.status(201).json({ 
       message: "Ficha de cliente creada con éxito.", 
       id_cliente: result.insertId 
     });
+  });
+});
+
+// ==========================================
+// RUTA: ELIMINAR UN SERVICIO DEL CATÁLOGO DE FORMA TOTAL 🗑️
+// ==========================================
+app.delete('/api/servicios/:id_servicio', (req, res) => {
+  const { id_servicio } = req.params;
+  const { id_empresa } = req.body; // Asegura que pertenece a la tienda activa
+
+  const sql = 'DELETE FROM servicio WHERE id_servicio = ? AND id_empresa = ?';
+
+  db.query(sql, [id_servicio, id_empresa], (err, result) => {
+    if (err) {
+      console.error("❌ Error al eliminar servicio de MySQL:", err);
+      return res.status(500).json({ message: "Error interno al procesar la baja del servicio." });
+    }
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Servicio no encontrado o no pertenece a tu sucursal." });
+    }
+
+    return res.json({ message: "Servicio eliminado de la base de datos correctamente." });
   });
 });
 

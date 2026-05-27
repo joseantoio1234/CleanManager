@@ -5,7 +5,8 @@ import {
   FiUser,
   FiTag, 
   FiFileText, 
-  FiArrowRight 
+  FiArrowRight,
+  FiLayers // 🚀 Icono limpio para la gestión de servicios
 } from 'react-icons/fi';
 
 const InicioAdmin = () => {
@@ -16,7 +17,7 @@ const InicioAdmin = () => {
     <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 p-6 flex flex-col items-center animate-in fade-in duration-300">
       
       {/* CABECERA DE BIENVENIDA */}
-      <div className="w-full max-w-5xl mb-8 text-left">
+      <div className="w-full max-w-7xl mb-8 text-left">
         <span className="text-[10px] bg-blue-50 text-blue-600 font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider">
           Panel de Gerencia
         </span>
@@ -29,12 +30,12 @@ const InicioAdmin = () => {
       </div>
 
       {/* SECCIÓN DE NAVEGACIÓN MÓDULOS DE ADMINISTRADOR */}
-      <div className="w-full max-w-5xl text-left mb-4">
+      <div className="w-full max-w-7xl text-left mb-4">
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Módulos de Control</h2>
       </div>
 
-      {/* REJILLA BALANCEADA DE 4 COLUMNAS */}
-      <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* REJILLA TOTALMENTE SIMÉTRICA DE 5 COLUMNAS ✨ */}
+      <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         
         {/* Enlace: Catálogo de Tarifas */}
         <div 
@@ -47,11 +48,32 @@ const InicioAdmin = () => {
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Precios y Tarifas</h3>
             <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-              Modifica los prices base, añade nuevas prendas y mantén al día el catálogo comercial del negocio.
+              Modifica los precios base, añade nuevas prendas y mantén al día el catálogo comercial del negocio.
             </p>
           </div>
           <div className="flex items-center text-[11px] font-bold text-blue-600 gap-1 pt-2 group-hover:gap-2 transition-all">
             Gestionar catálogo <FiArrowRight size={14}/>
+          </div>
+        </div>
+
+        {/* 🚀 CORREGIDO: Enlace Servicios de Limpieza (Card Unificada sin línea azul lateral) */}
+        <div 
+          onClick={() => navigate('/servicios')}
+          className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
+        >
+          <div className="p-3 bg-blue-50 text-blue-500 rounded-2xl w-fit">
+            <FiLayers size={20} />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
+              Servicios de Limpieza
+            </h3>
+            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+              Configura los flujos operativos del taller: añade lavados, planchados o limpiezas en seco personalizadas.
+            </p>
+          </div>
+          <div className="flex items-center text-[11px] font-bold text-blue-600 gap-1 pt-2 group-hover:gap-2 transition-all">
+            Configurar servicios <FiArrowRight size={14}/>
           </div>
         </div>
 
@@ -60,7 +82,7 @@ const InicioAdmin = () => {
           onClick={() => navigate('/admin-empleados')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
         >
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-fit">
             <FiUsers size={20} />
           </div>
           <div className="space-y-1">
@@ -74,7 +96,7 @@ const InicioAdmin = () => {
           </div>
         </div>
 
-        {/* Enlace: Control y Censo de Clientes (NUEVO) */}
+        {/* Enlace: Control y Censo de Clientes */}
         <div 
           onClick={() => navigate('/admin-clientes')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
@@ -98,7 +120,7 @@ const InicioAdmin = () => {
           onClick={() => navigate('/admin-facturas')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
         >
-          <div className="p-3 bg-indigo-50 text-indigo-500 rounded-2xl w-fit">
+          <div className="p-3 bg-purple-50 text-purple-500 rounded-2xl w-fit">
             <FiFileText size={20} />
           </div>
           <div className="space-y-1">

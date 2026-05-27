@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiPlus, FiGrid, FiSettings, FiActivity } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiGrid, FiActivity, FiTrash2 } from 'react-icons/fi'; // 🚀 Importamos FiTrash2
 import Swal from 'sweetalert2';
 
 interface ServicioCatalogo {
@@ -77,12 +77,58 @@ const Servicios = () => {
         }
     };
 
+    // 🚀 NUEVA FUNCIÓN: Eliminar servicio con doble confirmación nativa SaaS
+    const handleEliminarServicio = async (id_servicio: number, nombre: string) => {
+        Swal.fire({
+          title: '¿Eliminar Tratamiento?',
+          text: `¿Estás seguro de que quieres quitar "${nombre}"? Esta acción no se puede deshacer.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#ef4444',
+          cancelButtonColor: '#64748b',
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          customClass: { popup: 'rounded-[2rem]' }
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              const response = await fetch(`http://localhost:5000/api/servicios/${id_servicio}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_empresa: idEmpresa }) // Validación extra por aislamiento SaaS
+              });
+    
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.message || 'Error al eliminar');
+    
+              Swal.fire({
+                title: '¡Eliminado!',
+                text: 'El servicio ha sido removido del mostrador.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                customClass: { popup: 'rounded-[2rem]' }
+              });
+    
+              cargarServicios(); // Refrescamos la tabla instantáneamente
+            } catch (error: any) {
+              Swal.fire({
+                title: 'Error',
+                text: error.message || 'No se pudo eliminar el servicio.',
+                icon: 'error',
+                customClass: { popup: 'rounded-[2rem]' }
+              });
+            }
+          }
+        });
+    };
+
     return (
         <div className="w-full max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-200">
             {/* Cabecera superior */}
             <div className="flex justify-between items-center">
                 <button 
-                    onClick={() => navigate('/inicio')}
+                    onClick={() => navigate('/inicio-admin')}
                     className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm transition-colors group"
                 >
                     <FiArrowLeft className="group-hover:-translate-x-1 transition-transform" /> 
@@ -147,16 +193,17 @@ const Servicios = () => {
                                 <tr>
                                     <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Tratamiento / Operación</th>
                                     <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Descripción</th>
+                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase text-center w-24">Acciones</th> {/* 🚀 Columna de Acciones */}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={2} className="px-6 py-8 text-center text-xs text-slate-400 font-medium">Sincronizando operaciones...</td>
+                                        <td colSpan={3} className="px-6 py-8 text-center text-xs text-slate-400 font-medium">Sincronizando operaciones...</td>
                                     </tr>
                                 ) : listaServicios.length === 0 ? (
                                     <tr>
-                                        <td colSpan={2} className="px-6 py-12 text-center text-xs text-slate-400 font-medium">No se han registrado servicios en esta sucursal.</td>
+                                        <td colSpan={3} className="px-6 py-12 text-center text-xs text-slate-400 font-medium">No se han registrado servicios en esta sucursal.</td>
                                     </tr>
                                 ) : (
                                     listaServicios.map((serv) => (
@@ -165,6 +212,17 @@ const Servicios = () => {
                                                 <FiActivity className="text-blue-400" /> {serv.nombre_servicio}
                                             </td>
                                             <td className="px-6 py-4 text-xs text-slate-500 font-medium">{serv.descripcion || '—'}</td>
+                                            {/* 🚀 Botón de eliminar con papelera */}
+                                            <td className="px-6 py-3 text-center">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleEliminarServicio(serv.id_servicio, serv.nombre_servicio)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 rounded-xl bg-slate-50 hover:bg-red-50 transition-colors group"
+                                                    title="Eliminar servicio"
+                                                >
+                                                    <FiTrash2 className="text-sm" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}

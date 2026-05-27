@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiSave, FiUser, FiInfo, FiTag, FiMail } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiUser, FiInfo, FiTag } from 'react-icons/fi';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { authRepository } from '../database/repositories/auth.repository';
@@ -20,24 +20,32 @@ interface ClienteRegistrado {
   email?: string;
 }
 
+// 🚀 Nueva interfaz para los servicios dinámicos de MySQL
+interface ServicioCatalogo {
+  id_servicio: number;
+  nombre_servicio: string;
+  descripcion?: string;
+}
+
 const NuevoPedido = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [listaPrendas, setListaPrendas] = useState<PrendaCatalogo[]>([]);
-  const [listaClientes, setListaClientes] = useState<ClienteRegistrado[]>([]); // Base de datos local de clientes
+  const [listaClientes, setListaClientes] = useState<ClienteRegistrado[]>([]); 
+  const [listaServicios, setListaServicios] = useState<ServicioCatalogo[]>([]); // 🚀 Estado para el catálogo de servicios
 
   // Estado unificado actualizado con correo electrónico
   const [formData, setFormData] = useState({
     cliente: '',
     telefono: '',
-    email: '', // 🚀 Nuevo campo añadido al estado
+    email: '', 
     prenda: '',
     servicio: '',
     total: '',
     observaciones: ''
   });
 
-  // 1. Cargar las prendas y los clientes dinámicamente desde MySQL al montar la vista
+  // 1. Cargar las prendas, los clientes y los servicios dinámicamente desde MySQL al montar la vista
   useEffect(() => {
     const cargarDatosMostrador = async () => {
       try {
@@ -55,6 +63,14 @@ const NuevoPedido = () => {
           const dataClientes = await resClientes.json();
           setListaClientes(dataClientes);
         }
+
+        // 🚀 NUEVO: Carga del catálogo de servicios en caliente desde MySQL
+        const resServicios = await fetch(`http://localhost:5000/api/servicios/${idEmpresa}`);
+        if (resServicios.ok) {
+          const dataServicios = await resServicios.json();
+          setListaServicios(dataServicios);
+        }
+
       } catch (error) {
         console.error("❌ Error al inicializar datos del mostrador:", error);
       }
@@ -75,7 +91,7 @@ const NuevoPedido = () => {
         ...prev,
         cliente: nombreSeleccionado,
         telefono: clienteEncontrado.telefono || '',
-        email: clienteEncontrado.email || '' // 🌟 Autocompletado inmediato
+        email: clienteEncontrado.email || '' 
       }));
     } else {
       setFormData(prev => ({
@@ -121,13 +137,12 @@ const NuevoPedido = () => {
       const idEmpresaLogueada = parseInt(localStorage.getItem('id_empresa') || '1');
       const totalFormateado = formData.total.replace(',', '.');
 
-      // Enviamos el pedido real mapeando cada campo (con teléfono e email si tu backend/repository lo soporta)
       const payload: any = {
         id_empresa: idEmpresaLogueada,
         prenda: formData.prenda,
         cliente: formData.cliente,
-        telefono: formData.telefono, // Enviado
-        email: formData.email,       // Enviado
+        telefono: formData.telefono, 
+        email: formData.email,       
         servicio: formData.servicio,
         estado: 'EN_LAVADO',
         total: parseFloat(totalFormateado) || 0
@@ -190,7 +205,7 @@ const NuevoPedido = () => {
                 </select>
               </div>
 
-              {/* Teléfono de contacto (Se autocompleta pero sigue siendo editable por si acaso) */}
+              {/* Teléfono de contacto */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Teléfono de contacto</label>
                 <Input 
@@ -203,7 +218,7 @@ const NuevoPedido = () => {
                 />
               </div>
 
-              {/* Correo electrónico (Nuevo campo agregado a la interfaz) */}
+              {/* Correo electrónico */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Correo Electrónico</label>
                 <div className="relative flex items-center">
@@ -251,7 +266,7 @@ const NuevoPedido = () => {
                 </select>
               </div>
 
-              {/* Desplegable de Tipo de Servicio */}
+              {/* 🚀 REPARADO: Desplegable de Tipo de Servicio 100% DINÁMICO */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tipo de Servicio</label>
                 <select 
@@ -262,12 +277,11 @@ const NuevoPedido = () => {
                   className="w-full h-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 >
                   <option value="">Selecciona el tratamiento...</option>
-                  <option value="Limpieza">Limpieza Completa</option>
-                  <option value="Limpieza alfombras">Limpieza alfombras</option>
-                  <option value="Limpieza cortinas">Limpieza cortinas</option>
-                  <option value="Limpieza en seco">Limpieza en seco</option>
-                  <option value="Plancha">Solo Plancha</option>
-                  <option value="Secado">Solo Secado</option>
+                  {listaServicios.map((s, index) => (
+                    <option key={s.id_servicio || index} value={s.nombre_servicio}>
+                      {s.nombre_servicio}
+                    </option>
+                  ))}
                 </select>
               </div>
 
