@@ -9,14 +9,15 @@ import { Doughnut } from 'react-chartjs-2';
 // Registramos los elementos esenciales en el núcleo de Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+// Interfaz ampliada para admitir los datos dinámicos que inyectamos en MySQL
 interface PedidoListo {
     id_pedido: number;
     cliente: string;
     prenda: string;
     servicio: string;
     total: number;
-    // Añadimos opcionalmente el teléfono si tu consulta del backend lo incluye en el futuro
-    telefono?: string; 
+    telefono?: string | null; 
+    email?: string | null;
 }
 
 const Cobros = () => {
@@ -48,27 +49,33 @@ const Cobros = () => {
         cargarCaja();
     }, [idEmpresaActive]);
 
-    // LÓGICA DE NOTIFICACIONES AUTOMÁTICAS DINÁMICAS
+    // 🚀 DISPARO DIRECTO: Abre WhatsApp Nativo al instante sin confirmaciones visuales intermedias
     const enviarNotificacionWhatsApp = (order: PedidoListo) => {
-        // Redactamos el mensaje comercial de aviso pulcro
-        const mensaje = `Hola ${order.cliente}, le informamos desde su Tintorería que su pedido de "${order.prenda}" (${order.servicio}) ya se encuentra totalmente listo para ser retirado en nuestro mostrador. El importe total es de ${Number(order.total).toFixed(2)}€. ¡Le esperamos!`;
+        if (!order.telefono) return; // Validación silenciosa instantánea
+
+        // Limpiamos espacios, guiones y forzamos el prefijo de España (34)
+        let telefonoLimpio = order.telefono.replace(/[^0-9]/g, '');
+        if (!telefonoLimpio.startsWith('34') && telefonoLimpio.length === 9) {
+            telefonoLimpio = '34' + telefonoLimpio;
+        }
+
+        const mensaje = `¡Hola ${order.cliente}! Te informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está listo para recoger en tienda. Importe total: ${Number(order.total).toFixed(2)}€. ¡Gracias por tu confianza!`;
         
-        // Si no tenemos el teléfono del cliente mapeado en este objeto, usamos un marcador para que el operario lo complete en la app web de destino
-        const numeroTelefono = order.telefono ? order.telefono.replace(/\s+/g, '') : '';
+        // 🌟 Utiliza 'wa.me' para despertar la aplicación instalada en Windows en 1 milisegundo
+        const urlDirecta = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
         
-        // Construimos la URL universal de WhatsApp
-        const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroTelefono}&text=${encodeURIComponent(mensaje)}`;
-        
-        // Abrimos en una pestaña nueva del navegador de forma segura
-        window.open(urlWhatsApp, '_blank');
+        window.open(urlDirecta, '_blank');
     };
 
+    // 🚀 DISPARO DIRECTO: Inyecta los datos en el gestor de correo predeterminado al instante
     const enviarNotificacionEmail = (order: PedidoListo) => {
-        const asunto = encodeURIComponent(`Su pedido de Tintorería ya está listo para recoger`);
-        const cuerpo = encodeURIComponent(`Estimado/a ${order.cliente},\n\nLe escribimos para notificarle que su encargo de "${order.prenda}" asignado al tratamiento de "${order.servicio}" ya ha pasado el control de calidad en nuestros talleres y está disponible para retirada en el mostrador principal.\n\nImporte pendiente de cobro: ${Number(order.total).toFixed(2)}€.\n\nGracias por su confianza.`);
+        if (!order.email) return; // Validación silenciosa instantánea
+
+        const asunto = `Tu ropa ya está lista para retirar ✨ - Ticket #${order.id_pedido}`;
+        const cuerpo = `Hola ${order.cliente},\n\nTe informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está completamente listo para retirar en el mostrador principal.\n\nDetalles del ticket:\n- Nº Ticket: #${order.id_pedido}\n- Importe total: ${Number(order.total).toFixed(2)}€\n\n¡Muchas gracias por tu confianza!\nUn saludo del equipo de Tintorería Fregenal.`;
         
-        // Disparamos el gestor de correo local del sistema operativo
-        window.location.href = `mailto:?subject=${asunto}&body=${cuerpo}`;
+        // Abre el software local de correos inmediatamente relleno
+        window.location.href = `mailto:${order.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     };
 
     // Filtrado dinámico por buscador
@@ -181,7 +188,7 @@ const Cobros = () => {
                     <div className="relative flex-1 h-36 max-h-[150px] w-full flex justify-center lg:justify-start items-center">
                         {totalRecaudadoHoy === 0 ? (
                             <div className="text-center w-full text-xs text-slate-400 font-medium py-8">
-                                No se registran transacciones cobradas hoy para para estructurar el gráfico.
+                                No se registran transacciones cobradas hoy para estructurar el gráfico.
                             </div>
                         ) : (
                             <div className="w-full h-full max-w-[280px]">
@@ -238,7 +245,7 @@ const Cobros = () => {
                                         <td className="px-8 py-5 text-sm text-slate-400">{order.servicio}</td>
                                         <td className="px-8 py-5 text-sm font-black text-slate-900">{Number(order.total || 0).toFixed(2)}€</td>
                                         
-                                        {/* 🚀 BOTONES DE ACCIÓN MEJORADOS PARA AVISO DIRECTO */}
+                                        {/* COLUMNA DE NOTIFICACIONES TOTALMENTE AUTOMATIZADA EN CALIENTE */}
                                         <td className="px-8 py-3 text-center">
                                             <div className="inline-flex gap-2">
                                                 {/* Botón WhatsApp */}

@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FiUsers, 
   FiUser,
   FiTag, 
   FiFileText, 
   FiArrowRight,
-  FiLayers // 🚀 Icono limpio para la gestión de servicios
-} from 'react-icons/fi';
+  FiLayers 
+} from 'react-icons/fi'; // 🚀 Retirado el icono FiUsers ya que no se usa
 
 const InicioAdmin = () => {
   const navigate = useNavigate();
@@ -34,10 +33,10 @@ const InicioAdmin = () => {
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Módulos de Control</h2>
       </div>
 
-      {/* REJILLA TOTALMENTE SIMÉTRICA DE 5 COLUMNAS ✨ */}
-      <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* REJILLA SIMÉTRICA DE 4 COLUMNAS TRAS RETIRAR PLANTILLA 🚀 */}
+      <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        {/* Enlace: Catálogo de Tarifas */}
+        {/* 1. Enlace: Catálogo de Tarifas */}
         <div 
           onClick={() => navigate('/prendas')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
@@ -56,7 +55,7 @@ const InicioAdmin = () => {
           </div>
         </div>
 
-        {/* 🚀 CORREGIDO: Enlace Servicios de Limpieza (Card Unificada sin línea azul lateral) */}
+        {/* 2. Enlace: Servicios de Limpieza */}
         <div 
           onClick={() => navigate('/servicios')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
@@ -77,26 +76,7 @@ const InicioAdmin = () => {
           </div>
         </div>
 
-        {/* Enlace: Gestión de Plantilla (Operarios) */}
-        <div 
-          onClick={() => navigate('/admin-empleados')}
-          className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
-        >
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl w-fit">
-            <FiUsers size={20} />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">Control de Plantilla</h3>
-            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-              Genera las credenciales de acceso para nuevos empleados en mostrador y audita tu personal.
-            </p>
-          </div>
-          <div className="flex items-center text-[11px] font-bold text-blue-600 gap-1 pt-2 group-hover:gap-2 transition-all">
-            Gestionar operarios <FiArrowRight size={14}/>
-          </div>
-        </div>
-
-        {/* Enlace: Control y Censo de Clientes */}
+        {/* 3. Enlace: Control y Censo de Clientes */}
         <div 
           onClick={() => navigate('/admin-clientes')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"
@@ -115,7 +95,7 @@ const InicioAdmin = () => {
           </div>
         </div>
 
-        {/* Enlace: Auditoría Fiscal (Historial de Facturas) */}
+        {/* 4. Enlace: Auditoría Fiscal (Historial de Facturas) */}
         <div 
           onClick={() => navigate('/admin-facturas')}
           className="bg-white p-5 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between h-60 text-left group"

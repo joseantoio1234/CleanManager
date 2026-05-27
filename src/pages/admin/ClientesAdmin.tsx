@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
 
+// 🚀 REPARADO: Estructura de tipado sincronizada al 100% con las columnas de tu MySQL
 interface Cliente {
-    id_referencia: number;
-    cliente: string;
+    id_cliente: number;
+    nombre_completo: string; // Cambiado de 'cliente' a 'nombre_completo'
     totalPedidos: number;
     totalGastado: number;
 }
@@ -85,7 +86,7 @@ const ClientesAdmin = () => {
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
+        <div className="w-full max-w-6xl mx-auto p-6 space-y-6 animate-in fade-in duration-200">
             
             {/* Botón Volver al menú de cápsula blanca estilizado */}
             <div className="w-full max-w-6xl flex justify-end mb-2">
@@ -105,7 +106,7 @@ const ClientesAdmin = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 
-                {/* COLUMNA IZQUIERDA: Formulario informativo / Informativo */}
+                {/* COLUMNA IZQUIERDA: Formulario informativo */}
                 <div className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-blue-100/30 border border-white space-y-4 text-left">
                     <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl w-fit">
                         <FiUser size={24} />
@@ -147,10 +148,10 @@ const ClientesAdmin = () => {
                                         <td colSpan={4} className="px-6 py-10 text-center text-xs text-slate-400 font-bold">No hay clientes registrados en esta sucursal.</td>
                                     </tr>
                                 ) : (
-                                    clientes.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
+                                    clientes.map((item) => (
+                                        <tr key={item.id_cliente} className="hover:bg-slate-50/30 transition-colors">
                                             <td className="px-6 py-4 text-xs font-bold text-slate-700">
-                                                {editandoCliente === item.cliente ? (
+                                                {editandoCliente === item.nombre_completo ? (
                                                     <input 
                                                         type="text"
                                                         value={nuevoNombre}
@@ -160,19 +161,19 @@ const ClientesAdmin = () => {
                                                 ) : (
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-black uppercase text-[10px] shrink-0">
-                                                            {item.cliente ? item.cliente.charAt(0) : '?'}
+                                                            {item.nombre_completo ? item.nombre_completo.charAt(0) : '?'}
                                                         </div>
-                                                        <span className="truncate max-w-[180px]">{item.cliente}</span>
+                                                        <span className="truncate max-w-[180px]">{item.nombre_completo}</span>
                                                     </div>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-xs font-bold text-slate-500 text-center">{item.totalPedidos}</td>
                                             <td className="px-6 py-4 text-xs font-black text-slate-900 text-right">{Number(item.totalGastado).toFixed(2)}€</td>
                                             <td className="px-6 py-3 text-center">
-                                                {editandoCliente === item.cliente ? (
+                                                {editandoCliente === item.nombre_completo ? (
                                                     <div className="flex items-center justify-center gap-1.5">
                                                         <button 
-                                                            onClick={() => guardarCambiosCliente(item.cliente)}
+                                                            onClick={() => guardarCambiosCliente(item.nombre_completo)}
                                                             className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg border border-emerald-200"
                                                             title="Guardar cambios"
                                                         >
@@ -189,14 +190,14 @@ const ClientesAdmin = () => {
                                                 ) : (
                                                     <div className="flex items-center justify-center gap-1.5">
                                                         <button 
-                                                            onClick={() => iniciarEdicion(item.cliente)}
+                                                            onClick={() => iniciarEdicion(item.nombre_completo)}
                                                             className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg border border-blue-100"
                                                             title="Editar nombre"
                                                         >
                                                             <FiEdit2 size={13} />
                                                         </button>
                                                         <button 
-                                                            onClick={() => eliminarClienteCompleto(item.cliente)}
+                                                            onClick={() => eliminarClienteCompleto(item.nombre_completo)}
                                                             className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg border border-rose-100"
                                                             title="Eliminar cliente"
                                                         >

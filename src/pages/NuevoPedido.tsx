@@ -4,15 +4,14 @@ import { FiArrowLeft, FiSave, FiUser, FiInfo, FiTag } from 'react-icons/fi';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { authRepository } from '../database/repositories/auth.repository';
+import Swal from 'sweetalert2'; 
 
-// Estructura de la prenda que viene de MySQL
 interface PrendaCatalogo {
   id_prenda: number;
   nombre_prenda: string;
   precio_base: any;
 }
 
-// Interfaz para la base de datos de clientes registrados
 interface ClienteRegistrado {
   id_cliente?: number;
   nombre_completo: string;
@@ -20,7 +19,6 @@ interface ClienteRegistrado {
   email?: string;
 }
 
-// 🚀 Nueva interfaz para los servicios dinámicos de MySQL
 interface ServicioCatalogo {
   id_servicio: number;
   nombre_servicio: string;
@@ -32,9 +30,8 @@ const NuevoPedido = () => {
   const [loading, setLoading] = useState(false);
   const [listaPrendas, setListaPrendas] = useState<PrendaCatalogo[]>([]);
   const [listaClientes, setListaClientes] = useState<ClienteRegistrado[]>([]); 
-  const [listaServicios, setListaServicios] = useState<ServicioCatalogo[]>([]); // 🚀 Estado para el catálogo de servicios
+  const [listaServicios, setListaServicios] = useState<ServicioCatalogo[]>([]); 
 
-  // Estado unificado actualizado con correo electrónico
   const [formData, setFormData] = useState({
     cliente: '',
     telefono: '',
@@ -45,26 +42,22 @@ const NuevoPedido = () => {
     observaciones: ''
   });
 
-  // 1. Cargar las prendas, los clientes y los servicios dinámicamente desde MySQL al montar la vista
   useEffect(() => {
     const cargarDatosMostrador = async () => {
       try {
         const idEmpresa = localStorage.getItem('id_empresa') || '1';
         
-        // Carga de catálogo de prendas
         const resPrendas = await fetch(`http://localhost:5000/api/prendas/${idEmpresa}`);
         if (!resPrendas.ok) throw new Error('Error al solicitar el catálogo de prendas');
         const dataPrendas = await resPrendas.json();
         setListaPrendas(dataPrendas);
 
-        // Carga de la lista completa de clientes registrados para el desplegable
         const resClientes = await fetch(`http://localhost:5000/api/clientes/${idEmpresa}`);
         if (resClientes.ok) {
           const dataClientes = await resClientes.json();
           setListaClientes(dataClientes);
         }
 
-        // 🚀 NUEVO: Carga del catálogo de servicios en caliente desde MySQL
         const resServicios = await fetch(`http://localhost:5000/api/servicios/${idEmpresa}`);
         if (resServicios.ok) {
           const dataServicios = await resServicios.json();
@@ -79,11 +72,8 @@ const NuevoPedido = () => {
     cargarDatosMostrador();
   }, []);
 
-  // 2. Manejador para detectar cuando se elige un cliente del desplegable y autocompletar todo
   const handleClienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nombreSeleccionado = e.target.value;
-
-    // Buscamos el objeto cliente correspondiente
     const clienteEncontrado = listaClientes.find(c => c.nombre_completo === nombreSeleccionado);
 
     if (clienteEncontrado) {
@@ -103,14 +93,12 @@ const NuevoPedido = () => {
     }
   };
 
-  // 3. Manejador estándar para los demás controles (Inputs, Selects, Textarea)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     setFormData(prev => {
       const nuevoEstado = { ...prev, [name]: value };
 
-      // Si cambia la prenda, buscamos su precio base de forma automática
       if (name === 'prenda') {
         if (value === 'Varios') {
           nuevoEstado.total = ''; 
@@ -137,32 +125,44 @@ const NuevoPedido = () => {
       const idEmpresaLogueada = parseInt(localStorage.getItem('id_empresa') || '1');
       const totalFormateado = formData.total.replace(',', '.');
 
-      const payload: any = {
+      // Pasamos el payload extendido limpio al repositorio
+      await authRepository.createOrder({
         id_empresa: idEmpresaLogueada,
         prenda: formData.prenda,
         cliente: formData.cliente,
-        telefono: formData.telefono, 
-        email: formData.email,       
         servicio: formData.servicio,
+        telefono: formData.telefono || null,
+        email: formData.email || null,
         estado: 'EN_LAVADO',
         total: parseFloat(totalFormateado) || 0
-      };
+      });
 
-      await authRepository.createOrder(payload);
+      Swal.fire({
+        title: '¡Pedido Registrado!',
+        text: 'La orden ha sido guardada y enviada a la sección de lavado.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        customClass: { popup: 'rounded-[2rem] shadow-xl border border-slate-50' }
+      });
 
-      alert("¡Pedido registrado con éxito en el sistema!");
       navigate('/dashboard');
     } catch (error: any) {
-      alert(error.message || "Hubo un problema al guardar el pedido localmente.");
+      Swal.fire({
+        title: 'Error al registrar',
+        text: error.message || 'Hubo un problema al guardar el pedido de forma local.',
+        icon: 'error',
+        customClass: { popup: 'rounded-[2rem] shadow-xl' }
+      });
     } finally {
-      loading && setLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 animate-in fade-in duration-200">
-      {/* Botón Volver al Menú Principal */}
       <button 
+        type="button"
         onClick={() => navigate('/inicio')}
         className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm mb-6 transition-colors group"
       >
@@ -171,7 +171,6 @@ const NuevoPedido = () => {
       </button>
 
       <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-white overflow-hidden">
-        {/* Encabezado del Formulario */}
         <div className="bg-blue-600 p-8 text-white">
           <h1 className="text-2xl font-bold">Registro de Pedido (Mostrador)</h1>
           <p className="text-blue-100 text-sm">Registra la entrada de ropa y genera el ticket de servicio para el taller.</p>
@@ -186,7 +185,6 @@ const NuevoPedido = () => {
             </h2>
             <div className="space-y-4">
               
-              {/* Desplegable Dinámico de Clientes */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Seleccionar Cliente</label>
                 <select 
@@ -205,7 +203,6 @@ const NuevoPedido = () => {
                 </select>
               </div>
 
-              {/* Teléfono de contacto */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Teléfono de contacto</label>
                 <Input 
@@ -218,7 +215,6 @@ const NuevoPedido = () => {
                 />
               </div>
 
-              {/* Correo electrónico */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Correo Electrónico</label>
                 <div className="relative flex items-center">
@@ -243,7 +239,6 @@ const NuevoPedido = () => {
             </h2>
             <div className="space-y-4">
               
-              {/* Desplegable de Tipo de Ropa/Prenda DINÁMICO */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tipo de Prenda</label>
                 <select 
@@ -266,7 +261,6 @@ const NuevoPedido = () => {
                 </select>
               </div>
 
-              {/* 🚀 REPARADO: Desplegable de Tipo de Servicio 100% DINÁMICO */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Tipo de Servicio</label>
                 <select 
@@ -285,7 +279,6 @@ const NuevoPedido = () => {
                 </select>
               </div>
 
-              {/* Importe Total (Auto-rellenado) */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Importe Total (€)</label>
                 <Input 

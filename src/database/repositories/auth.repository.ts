@@ -3,14 +3,16 @@
 // Esta es la URL de tu servidor Node.js local con MySQL
 const API_URL = 'http://localhost:5000/api';
 
-// Interfaz para el tipado del nuevo pedido
+// 🚀 INTERFAZ ACTUALIZADA: Añadidos teléfono y email con tipado flexible
 interface OrderData {
-  prenda: string;
   id_empresa: number;
+  prenda: string;
   cliente: string;
   servicio: string;
-  estado: 'EN_LAVADO' | 'LISTO' | 'ENTREGADO';
+  estado: string; 
   total: number;
+  telefono?: string | null; // 🌟 Reconocido de forma oficial
+  email?: string | null;    // 🌟 Reconocido de forma oficial
 }
 
 export const authRepository = {

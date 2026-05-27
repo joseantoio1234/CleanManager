@@ -592,16 +592,26 @@ app.post('/api/prendas', (req, res) => {
 });
 
 // ==========================================
-// RUTA: DATOS OPERATIVOS DE LA CAJA DIARIA (CORREGIDA 📊)
+// RUTA: DATOS OPERATIVOS DE LA CAJA DIARIA (REPARADA AL 100% 📊)
 // ==========================================
 app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
   const { id_empresa } = req.params;
 
+  // 🚀 SOLUCIÓN: Cruzamos la tabla pedido con la tabla cliente para extraer el teléfono y email reales
   const sqlPendientes = `
-    SELECT id_pedido, cliente, prenda, servicio, total, estado 
-    FROM pedido 
-    WHERE id_empresa = ? AND estado = 'ACABADO'
-    ORDER BY id_pedido DESC
+    SELECT 
+      p.id_pedido, 
+      p.cliente, 
+      p.prenda, 
+      p.servicio, 
+      p.total, 
+      p.estado, 
+      c.telefono, 
+      c.email
+    FROM pedido p
+    LEFT JOIN cliente c ON LOWER(TRIM(p.cliente)) = LOWER(TRIM(c.nombre_completo)) AND p.id_empresa = c.id_empresa
+    WHERE p.id_empresa = ? AND p.estado = 'ACABADO'
+    ORDER BY p.id_pedido DESC
   `;
 
   const sqlMetodos = `
@@ -614,22 +624,24 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
 
   db.query(sqlPendientes, [id_empresa], (err, pendientes) => {
     if (err) {
-      console.error("❌ Error en caja (pendientes):", err);
-      return res.status(500).json({ message: "Error en el servidor local." });
+      console.error("❌ Error en caja (pendientes) con JOIN:", err);
+      return res.status(500).json({ message: "Error al extraer listado de entregas." });
     }
 
     db.query(sqlMetodos, [id_empresa], (errMetodos, metodosRows) => {
       if (errMetodos) {
         console.error("❌ Error en caja (métodos de pago):", errMetodos);
-        return res.status(500).json({ message: "Error en el servidor local." });
+        return res.status(500).json({ message: "Error al extraer estadísticas financieras." });
       }
 
       const graficoCaja = { EFECTIVO: 0, TARJETA: 0, BIZUM: 0 };
       
       metodosRows.forEach(row => {
-        const metodo = String(row.metodo_pago).toUpperCase();
-        if (graficoCaja[metodo] !== undefined) {
-          graficoCaja[metodo] = Number(row.total);
+        if (row.metodo_pago) {
+          const metodo = String(row.metodo_pago).toUpperCase();
+          if (graficoCaja[metodo] !== undefined) {
+            graficoCaja[metodo] = Number(row.total);
+          }
         }
       });
 
@@ -640,7 +652,6 @@ app.get('/api/caja/operaciones/:id_empresa', (req, res) => {
     });
   });
 });
-
 // ==========================================
 // 👑 NUEVAS RUTAS EXCLUSIVAS DEL ADMINISTRADOR
 // ==========================================
