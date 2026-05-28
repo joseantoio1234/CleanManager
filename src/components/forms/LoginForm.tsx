@@ -24,7 +24,7 @@ const Login = () => {
       return;
     }
 
-    setLoading(true);
+    loadingTrue();
     try {
       // 1. Intentamos el inicio de sesión real apuntando a tu API Node/MySQL
       const session = await authRepository.signIn(username, password) as any;
@@ -85,13 +85,18 @@ const Login = () => {
     }
   };
 
+  const loadingTrue = () => {
+    setLoading(true);
+  };
+
   // ==========================================
   // VISTA DE TRANSICIÓN: INICIANDO SESIÓN
   // ==========================================
   if (isRedirecting) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px] animate-in fade-in duration-300">
-        <div className="w-full max-w-[420px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/30 border border-white flex flex-col items-center space-y-6 text-center">
+        {/* 🚀 RELIEVE EXTRA APLICADO TAMBIÉN A LA PANTALLA DE CARGA */}
+        <div className="w-full max-w-[420px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-955/10 border border-slate-100 flex flex-col items-center space-y-6 text-center">
           
           {/* Spinner animado con Tailwind */}
           <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
@@ -109,7 +114,8 @@ const Login = () => {
   // Vista del formulario normal
   return (
     <div className="flex items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px]">
-      <div className="w-full max-w-[520px] bg-white px-10 py-8 md:px-14 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/40 flex flex-col items-center border border-white">
+      {/* 🚀 REPARADO: Añadido contorno 'border-slate-100' y potenciada la sombra para dar profundidad 3D real */}
+      <div className="w-full max-w-[520px] bg-white px-10 py-8 md:px-14 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-950/10 flex flex-col items-center border border-slate-100 transition-all duration-300">
         
         <div className="text-center">
           <h1 className="text-4xl font-bold text-blue-600 tracking-tight">
@@ -128,7 +134,6 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="w-full space-y-4 text-left">
           
-          {/* Cambiado de Correo Electrónico a Usuario de Acceso */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
               Usuario de Acceso

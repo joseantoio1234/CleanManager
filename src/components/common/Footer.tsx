@@ -4,7 +4,8 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-white border-t border-blue-100 pt-16 pb-8 px-10">
+    /* 🚀 FOOTER ACTUALIZADO: Cambiado bg-white por bg-slate-100 e igualado el borde superior a border-slate-200 */
+    <footer className="bg-slate-100 border-t border-slate-200 pt-16 pb-8 px-10 transition-colors">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
         
         {/* Columna 1: Logo y Eslogan */}
@@ -50,7 +51,8 @@ export const Footer = () => {
       </div>
 
       {/* Barra Inferior de Copyright */}
-      <div className="max-w-6xl mx-auto pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
+      {/* 🚀 Ajustado el borde interno también a border-slate-200/60 para que no desentone */}
+      <div className="max-w-6xl mx-auto pt-8 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
         <p>© {currentYear} CleanManager. Todos los derechos reservados.</p>
         <div className="flex gap-6">
           <span>React + Tailwind + Supabase</span>

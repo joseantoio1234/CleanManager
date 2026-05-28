@@ -26,9 +26,6 @@ const Landing = () => {
                 Comenzar ahora
               </Button>
             </Link>
-            <Button variant="outline" className="px-8 py-6 text-lg rounded-xl border-slate-200">
-              Ver Demo
-            </Button>
           </div>
         </div>
       </section>
@@ -61,7 +58,7 @@ const Landing = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-6">¿Listo para digitalizar tu tintorería?</h2>
             <p className="text-blue-100 text-lg mb-10 max-w-xl mx-auto">Únete a la nueva era de la gestión textil con CleanManager.</p>
             <Link to="/login">
-              <Button className="bg-white text-blue-600 hover:bg-blue-50 px-10 py-7 text-lg font-bold rounded-2xl">
+              <Button className="bg-blue text-blue-600 shadow-blue-300 px-10 py-7 text-lg font-bold rounded-2xl">
                 Acceder al Panel
               </Button>
             </Link>
