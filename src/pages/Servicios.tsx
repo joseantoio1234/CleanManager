@@ -144,7 +144,7 @@ const Servicios = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 
                 {/* Formulario de Alta */}
-                <form onSubmit={handleAddServicio} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+                <form onSubmit={handleAddServicio} className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm space-y-4">
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                         <FiPlus className="text-blue-500" /> Nuevo Servicio
                     </h3>
@@ -167,7 +167,7 @@ const Servicios = () => {
                             placeholder="Opcional: detalles del tratamiento..." 
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 text-xs font-semibold rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all min-h-[80px]"
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 text-xs font-semibold rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all min-h-20"
                         />
                     </div>
 
@@ -177,7 +177,7 @@ const Servicios = () => {
                 </form>
 
                 {/* Tabla de Catálogo Activo */}
-                <div className="lg:col-span-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="lg:col-span-2 bg-white rounded-4xl border border-slate-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-50 flex justify-between items-center">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <FiGrid className="text-blue-500" /> Catálogo Activo

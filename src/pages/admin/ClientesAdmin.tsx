@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
 
@@ -165,7 +165,7 @@ const ClientesAdmin = () => {
                                                         <div className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-black uppercase text-[10px] shrink-0">
                                                             {item.nombre_completo ? item.nombre_completo.charAt(0) : '?'}
                                                         </div>
-                                                        <span className="truncate max-w-[180px]">{item.nombre_completo}</span>
+                                                        <span className="truncate max-w-45">{item.nombre_completo}</span>
                                                     </div>
                                                 )}
                                             </td>

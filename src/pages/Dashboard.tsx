@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     FiBox,
     FiClock,
@@ -156,7 +156,7 @@ const Dashboard = () => {
                     <div 
                         key={index} 
                         onClick={() => !loading && setActiveModal(stat.id)}
-                        className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-blue-100 transition-all active:scale-98 group select-none"
+                        className="bg-white p-6 rounded-4xl shadow-sm border border-slate-100 flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-blue-100 transition-all active:scale-98 group select-none"
                     >
                         <div className={`${stat.color} p-4 rounded-2xl text-white text-2xl transition-transform group-hover:scale-105`}>
                             {stat.icon}

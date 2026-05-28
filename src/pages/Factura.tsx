@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiPrinter, FiCheckCircle, FiSave } from 'react-icons/fi';
 
@@ -123,7 +123,7 @@ const Factura = () => {
             </div>
 
             {/* CUERPO DEL TICKET / FACTURA */}
-            <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-100 p-8 border border-slate-100 font-mono text-slate-800 relative overflow-hidden print:shadow-none print:border-none print:p-0">
+            <div className="bg-white rounded-4xl shadow-xl shadow-slate-100 p-8 border border-slate-100 font-mono text-slate-800 relative overflow-hidden print:shadow-none print:border-none print:p-0">
                 
                 {/* Decoración de validez */}
                 <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border print:hidden ${

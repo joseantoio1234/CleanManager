@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FiUser,
@@ -39,7 +38,7 @@ const InicioAdmin = () => {
         {/* 1. Enlace: Catálogo de Tarifas */}
         <div 
           onClick={() => navigate('/prendas')}
-          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-[320px] text-left group"
+          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-80 text-left group"
         >
           <div className="space-y-5">
             <div className="p-4 bg-amber-50 text-amber-500 rounded-2xl w-fit group-hover:scale-110 transition-transform">
@@ -62,7 +61,7 @@ const InicioAdmin = () => {
         {/* 2. Enlace: Servicios de Limpieza */}
         <div 
           onClick={() => navigate('/servicios')}
-          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-[320px] text-left group"
+          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-80 text-left group"
         >
           <div className="space-y-5">
             <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl w-fit group-hover:scale-110 transition-transform">
@@ -85,7 +84,7 @@ const InicioAdmin = () => {
         {/* 3. Enlace: Control y Censo de Clientes */}
         <div 
           onClick={() => navigate('/admin-clientes')}
-          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-[320px] text-left group"
+          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-80 text-left group"
         >
           <div className="space-y-5">
             <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl w-fit group-hover:scale-110 transition-transform">
@@ -108,7 +107,7 @@ const InicioAdmin = () => {
         {/* 4. Enlace: Auditoría Fiscal (Historial de Facturas) */}
         <div 
           onClick={() => navigate('/admin-facturas')}
-          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-[320px] text-left group"
+          className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-100/20 border border-white hover:shadow-2xl hover:shadow-blue-200/40 hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between min-h-80 text-left group"
         >
           <div className="space-y-5">
             <div className="p-4 bg-purple-50 text-purple-500 rounded-2xl w-fit group-hover:scale-110 transition-transform">

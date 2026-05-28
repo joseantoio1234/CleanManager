@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiDollarSign, FiSearch, FiMail, FiMessageCircle, FiTrendingUp } from 'react-icons/fi';
 
@@ -152,7 +152,7 @@ const Cobros = () => {
             {/* SECCIÓN SUPERIOR: Resumen de Caja y Gráfico */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Métricas rápidas */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
+                <div className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="p-3.5 bg-indigo-500 text-white rounded-2xl text-xl shadow-lg shadow-indigo-100">
                             <FiTrendingUp />
@@ -179,19 +179,19 @@ const Cobros = () => {
                 </div>
 
                 {/* GRÁFICO CIRCULAR INTERACTIVO (DÓNUT) */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between min-h-[220px]">
+                <div className="lg:col-span-2 bg-white p-6 rounded-4xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-55">
                     <div className="mb-2">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Distribución de Ingresos</h3>
                         <p className="text-xs text-slate-400">Proporción visual de la recaudación según el medio de pago del mostrador.</p>
                     </div>
 
-                    <div className="relative flex-1 h-36 max-h-[150px] w-full flex justify-center lg:justify-start items-center">
+                    <div className="relative flex-1 h-36 max-h-37.5 w-full flex justify-center lg:justify-start items-center">
                         {totalRecaudadoHoy === 0 ? (
                             <div className="text-center w-full text-xs text-slate-400 font-medium py-8">
                                 No se registran transacciones cobradas hoy para estructurar el gráfico.
                             </div>
                         ) : (
-                            <div className="w-full h-full max-w-[280px]">
+                            <div className="w-full h-full max-w-70">
                                 <Doughnut data={dataGrafico} options={opcionesGrafico} />
                             </div>
                         )}

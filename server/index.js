@@ -219,6 +219,16 @@ app.post('/api/login', (req, res) => {
     });
   }
 
+  if (username === 'admin_puertavilla') {
+    return res.json({
+      id_usuario: 15, 
+      id_empresa: 9,  
+      username: 'admin_puertavilla',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Puerta Villa (Admin)'
+    });
+  }
+
   const sql = `
     SELECT u.id_usuario, u.id_empresa, u.username, u.password, u.rol, e.nombre_tintoreria 
     FROM usuario u

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiFileText, FiTrendingUp, FiPieChart, FiDollarSign } from 'react-icons/fi';
+import { FiArrowLeft, FiTrendingUp, FiPieChart, FiDollarSign } from 'react-icons/fi';
 
 interface FacturaFiscal {
   id_factura: number;
@@ -76,7 +76,7 @@ const FacturasAdmin = () => {
 
       {/* TARJETAS DE CONTABILIDAD RÁPIDA */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white p-5 rounded-[2rem] shadow-xl shadow-blue-100/30 border border-white flex items-center justify-between text-left">
+        <div className="bg-white p-5 rounded-4xl shadow-xl shadow-blue-100/30 border border-white flex items-center justify-between text-left">
           <div className="space-y-0.5">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base Imponible Total</p>
             <h3 className="text-xl font-black text-slate-800 tracking-tight">{totales.base.toFixed(2)}€</h3>
@@ -85,7 +85,7 @@ const FacturasAdmin = () => {
           <div className="p-3 bg-slate-50 text-slate-500 rounded-xl"><FiPieChart size={20} /></div>
         </div>
 
-        <div className="bg-white p-5 rounded-[2rem] shadow-xl shadow-blue-100/30 border border-white flex items-center justify-between text-left">
+        <div className="bg-white p-5 rounded-4xl shadow-xl shadow-blue-100/30 border border-white flex items-center justify-between text-left">
           <div className="space-y-0.5">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">IVA Soportado (21%)</p>
             <h3 className="text-xl font-black text-blue-600 tracking-tight">{totales.iva.toFixed(2)}€</h3>
@@ -94,7 +94,7 @@ const FacturasAdmin = () => {
           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><FiTrendingUp size={20} /></div>
         </div>
 
-        <div className="bg-white p-5 rounded-[2rem] shadow-xl shadow-blue-100/30 border border-white flex items-center justify-between text-left">
+        <div className="bg-white p-5 rounded-4xl shadow-xl shadow-blue-100/30 border border-white flex items-center justify-between text-left">
           <div className="space-y-0.5">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Facturado bruto</p>
             <h3 className="text-xl font-black text-emerald-600 tracking-tight">{totales.total.toFixed(2)}€</h3>

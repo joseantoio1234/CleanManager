@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     FiTrendingUp, 
@@ -107,7 +106,7 @@ const InicioAdmin = () => {
             </div>
 
             {/* Banner inferior informativo */}
-            <div className="bg-slate-900/5 border border-dashed border-slate-200 rounded-[2rem] p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+            <div className="bg-slate-900/5 border border-dashed border-slate-200 rounded-4xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
                 <div className="flex items-center gap-3">
                     <div className="text-slate-400 text-xl"><FiSettings /></div>
                     <p className="text-xs text-slate-500 font-medium">

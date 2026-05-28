@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { FiUsers, FiUserPlus, FiEdit2, FiArrowLeft, FiMail, FiLock, FiUser } from 'react-icons/fi';
 
 interface Empleado {
@@ -143,7 +142,7 @@ const EmpleadosAdmin = () => {
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-5 gap-6">
         
         {/* COLUMNA IZQUIERDA: Formulario dinámico (Alta / Modificación) */}
-        <div className="md:col-span-2 bg-white p-6 rounded-[2rem] shadow-xl shadow-blue-100/40 border border-white h-fit">
+        <div className="md:col-span-2 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white h-fit">
           <h2 className="text-md font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
             <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
               {isEditing ? <FiEdit2 size={14}/> : <FiUserPlus size={14}/>}
@@ -226,7 +225,7 @@ const EmpleadosAdmin = () => {
         </div>
 
         {/* COLUMNA DERECHA: Tabla con el Personal activo de MySQL */}
-        <div className="md:col-span-3 bg-white p-6 rounded-[2rem] shadow-xl shadow-blue-100/40 border border-white flex flex-col h-[520px]">
+        <div className="md:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-130">
           <h2 className="text-md font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2 text-left">
             <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FiUsers size={14}/></span>
             Plantilla Activa de Mostrador

@@ -1,4 +1,3 @@
-import { Footer } from '../components/common/Footer';
 import { Button } from '../components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -8,7 +7,7 @@ const Landing = () => {
       {/* Se ha eliminado el <Navbar /> de aquí para evitar el duplicado */}
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 flex flex-col items-center text-center bg-gradient-to-b from-blue-50 to-white px-4">
+      <section className="relative pt-20 pb-32 flex flex-col items-center text-center bg-linear-to-b from-blue-50 to-white px-4">
         <div className="max-w-4xl">
           <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
             Gestión de Tintorerías

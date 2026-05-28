@@ -304,7 +304,7 @@ const NuevoPedido = () => {
               name="observaciones"
               value={formData.observaciones}
               onChange={handleChange}
-              className="w-full p-4 rounded-2xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none min-h-[100px] transition-all"
+              className="w-full p-4 rounded-2xl bg-slate-50/50 border border-slate-100 text-sm focus:ring-2 focus:ring-blue-100 outline-none min-h-25 transition-all"
               placeholder="Indica aquí si la prenda tiene manchas específicas, descosidos o si es una entrega urgente..."
             ></textarea>
           </div>
@@ -314,7 +314,7 @@ const NuevoPedido = () => {
             <Button 
               type="submit" 
               disabled={loading}
-              className="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95"
+              className="grow bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95"
             >
               <FiSave className="mr-2" /> {loading ? "Registrando..." : "Confirmar y Guardar Pedido"}
             </Button>
