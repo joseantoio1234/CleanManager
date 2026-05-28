@@ -3,8 +3,8 @@ import { Button } from '../ui/button';
 
 export const Navbar = () => {
   return (
-    /* py-3 para una altura más compacta y shadow-sm para un toque de profundidad */
-    <nav className="flex items-center justify-between px-10 py-3 bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-blue-50 shadow-sm">
+    /* 🚀 NAVBAR ACTUALIZADA: Cambiado bg-white/90 por bg-slate-100 y ajustado el borde para resaltar más */
+    <nav className="flex items-center justify-between px-10 py-3 bg-slate-100 sticky top-0 z-50 border-b border-slate-200 shadow-sm transition-colors">
 
       {/* Logo: text-xl para ajustarse a la barra más pequeña */}
       <Link to="/" className="text-xl font-bold text-blue-600 tracking-tight">
@@ -21,7 +21,7 @@ export const Navbar = () => {
         {/* Grupo de botones */}
         <div className="flex items-center gap-3">
           <Link to="/login">
-            <Button variant="outline" className="border-none text-blue-600 hover:bg-blue-50 font-semibold h-9 px-4">
+            <Button variant="outline" className="border-none text-blue-600 hover:bg-blue-200/50 font-semibold h-9 px-4 transition-colors">
               Iniciar Sesión
             </Button>
           </Link>

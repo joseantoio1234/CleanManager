@@ -71,8 +71,8 @@ const Cobros = () => {
     const enviarNotificacionEmail = (order: PedidoListo) => {
         if (!order.email) return; // Validación silenciosa instantánea
 
-        const asunto = `Tu ropa ya está lista para retirar ✨ - Ticket #${order.id_pedido}`;
-        const cuerpo = `Hola ${order.cliente},\n\nTe informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está completamente listo para retirar en el mostrador principal.\n\nDetalles del ticket:\n- Nº Ticket: #${order.id_pedido}\n- Importe total: ${Number(order.total).toFixed(2)}€\n\n¡Muchas gracias por tu confianza!\nUn saludo del equipo de Tintorería Fregenal.`;
+        const asunto = `Tu ropa ya está lista para retirar ✨`;
+        const cuerpo = `Hola ${order.cliente},\n\nTe informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está completamente listo para retirar en el mostrador principal.\n\nDetalles del ticket:\n- Importe total: ${Number(order.total).toFixed(2)}€\n\n\nLe informamos que en el caso de que no se recoja la prenda en una franja de tiemo de 2 meses tras emitirse este mensaje, se hara una autorecarga de un 15% del precio total y a los 4 meses se dara dado como abandono de prenda.\n¡Muchas gracias por tu confianza!\nUn saludo del equipo de Tintorería Fregenal.`;
         
         // Abre el software local de correos inmediatamente relleno
         window.location.href = `mailto:${order.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
