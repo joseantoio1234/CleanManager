@@ -789,41 +789,64 @@ app.put('/api/admin/empleados/:id_usuario', async (req, res) => {
   }
 });
 
-// RUTA ADMIN: ACTUALIZAR DATOS DE UN CLIENTE (MULTIEMPRESA 🔒)
+// ==========================================
+// RUTA ADMIN: ACTUALIZAR DATOS DE UN CLIENTE (REPARADA 🔒)
+// ==========================================
 app.put('/api/admin/clientes/update', (req, res) => {
+  // 🚀 REPARADO: Sincronizado para usar directamente "nombre_completo" de la tabla cliente
   const { id_empresa, clienteViejo, clienteNuevo } = req.body;
 
   if (!id_empresa || !clienteViejo || !clienteNuevo) {
     return res.status(400).json({ message: "Faltan campos obligatorios para actualizar el cliente." });
   }
 
-  const sql = `UPDATE pedido SET cliente = ? WHERE id_empresa = ? AND cliente = ?`;
+  // Modificamos tanto la tabla oficial de clientes como el historial de pedidos vinculados
+  const sqlCliente = `UPDATE cliente SET nombre_completo = ? WHERE id_empresa = ? AND nombre_completo = ?`;
+  const sqlPedido = `UPDATE pedido SET cliente = ? WHERE id_empresa = ? AND cliente = ?`;
 
-  db.query(sql, [clienteNuevo, id_empresa, clienteViejo], (err, result) => {
+  db.query(sqlCliente, [clienteNuevo.trim(), id_empresa, clienteViejo.trim()], (err) => {
     if (err) {
-      console.error("❌ Error al actualizar el cliente en MySQL:", err);
-      return res.status(500).json({ message: "Error interno al modificar los datos del cliente." });
+      console.error("❌ Error al actualizar la tabla cliente:", err);
+      return res.status(500).json({ message: "Error interno en el servidor." });
     }
-    return res.json({ message: "Cliente actualizado con éxito en todos los registros." });
+
+    db.query(sqlPedido, [clienteNuevo.trim(), id_empresa, clienteViejo.trim()], (errPedido) => {
+      if (errPedido) {
+        console.error("❌ Error al unificar el historial de pedidos:", errPedido);
+        return res.status(500).json({ message: "Error interno en el servidor." });
+      }
+      return res.json({ message: "Cliente y su historial actualizados con éxito." });
+    });
   });
 });
 
-// RUTA ADMIN: ELIMINAR CLIENTE Y SUS REGISTROS DE LA EMPRESA
+// ==========================================
+// RUTA ADMIN: ELIMINAR CLIENTE Y SUS REGISTROS (REPARADA 🗑️)
+// ==========================================
 app.delete('/api/admin/clientes/delete', (req, res) => {
+  // 🚀 REPARADO: Captura el parámetro "nombre_cliente" enviado por el frontend
   const { id_empresa, nombre_cliente } = req.body;
 
   if (!id_empresa || !nombre_cliente) {
     return res.status(400).json({ message: "Faltan datos para procesar la baja." });
   }
 
-  const sql = `DELETE FROM pedido WHERE id_empresa = ? AND cliente = ?`;
+  const sqlCliente = `DELETE FROM cliente WHERE id_empresa = ? AND nombre_completo = ?`;
+  const sqlPedido = `DELETE FROM pedido WHERE id_empresa = ? AND cliente = ?`;
 
-  db.query(sql, [id_empresa, nombre_cliente], (err, result) => {
+  db.query(sqlCliente, [nombre_cliente.trim(), id_empresa], (err) => {
     if (err) {
-      console.error("❌ Error al eliminar el cliente en MySQL:", err);
+      console.error("❌ Error al eliminar la ficha del cliente:", err);
       return res.status(500).json({ message: "Error interno al borrar el cliente." });
     }
-    return res.json({ message: "Cliente y su historial eliminados del sistema correctamente." });
+
+    db.query(sqlPedido, [nombre_cliente.trim(), id_empresa], (errPedido) => {
+      if (errPedido) {
+        console.error("❌ Error al purgar el historial de pedidos:", errPedido);
+        return res.status(500).json({ message: "Error interno al borrar el historial." });
+      }
+      return res.json({ message: "Cliente purgado del sistema correctamente." });
+    });
   });
 });
 

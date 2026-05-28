@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
 
-// 🚀 REPARADO: Estructura de tipado sincronizada al 100% con las columnas de tu MySQL
+// Estructura de tipado sincronizada al 100% con las columnas de tu MySQL
 interface Cliente {
     id_cliente: number;
-    nombre_completo: string; // Cambiado de 'cliente' a 'nombre_completo'
+    nombre_completo: string; 
     totalPedidos: number;
     totalGastado: number;
 }
@@ -45,6 +45,7 @@ const ClientesAdmin = () => {
         setNuevoNombre(nombreActual);
     };
 
+    // 🚀 REPARADO: Sincronizado para enviar la clave correcta al backend
     const guardarCambiosCliente = async (nombreOriginal: string) => {
         if (!nuevoNombre.trim()) return;
         try {
@@ -53,7 +54,7 @@ const ClientesAdmin = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id_empresa: idEmpresa,
-                    clienteViejo: nombreOriginal,
+                    clienteViejo: nombreOriginal, // Pasa el nombre actual indexado
                     clienteNuevo: nuevoNombre.trim()
                 })
             });
@@ -62,10 +63,11 @@ const ClientesAdmin = () => {
                 await cargarClientes();
             }
         } catch (error) {
-            console.error(error);
+            console.error("Error al actualizar cliente:", error);
         }
     };
 
+    // 🚀 REPARADO: Sincronizado para enviar la clave correcta al backend
     const eliminarClienteCompleto = async (nombreCliente: string) => {
         if (!window.confirm(`¿Estás seguro de que deseas eliminar a "${nombreCliente}" y todo su historial de pedidos de este local? Esta acción no se puede deshacer.`)) return;
         try {
@@ -74,14 +76,14 @@ const ClientesAdmin = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id_empresa: idEmpresa,
-                    nombre_cliente: nombreCliente
+                    nombre_cliente: nombreCliente // Pasa la variable nominal de la fila
                 })
             });
             if (response.ok) {
                 await cargarClientes();
             }
         } catch (error) {
-            console.error(error);
+            console.error("Error al eliminar cliente:", error);
         }
     };
 
@@ -169,6 +171,8 @@ const ClientesAdmin = () => {
                                             </td>
                                             <td className="px-6 py-4 text-xs font-bold text-slate-500 text-center">{item.totalPedidos}</td>
                                             <td className="px-6 py-4 text-xs font-black text-slate-900 text-right">{Number(item.totalGastado).toFixed(2)}€</td>
+                                            
+                                            {/* COLUMNA ACCIONES REPARADA DINÁMICAMENTE */}
                                             <td className="px-6 py-3 text-center">
                                                 {editandoCliente === item.nombre_completo ? (
                                                     <div className="flex items-center justify-center gap-1.5">

@@ -59,7 +59,7 @@ const Cobros = () => {
             telefonoLimpio = '34' + telefonoLimpio;
         }
 
-        const mensaje = `¡Hola ${order.cliente}! Te informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está listo para recoger en tienda. Importe total: ${Number(order.total).toFixed(2)}€. ¡Gracias por tu confianza!`;
+        const mensaje = `Hola ${order.cliente},\n\nTe informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está completamente listo para retirar en el mostrador principal.\n\nDetalles del ticket:\n- Importe total: ${Number(order.total).toFixed(2)}€\n\n\nLe informamos que en el caso de que no se recoja la prenda en una franja de tiemo de 2 meses tras emitirse este mensaje, se hara una autorecarga de un 15% del precio total y a los 4 meses se dara dado como abandono de prenda.\n¡Muchas gracias por tu confianza!\nUn saludo del equipo de Tintorería Fregenal.`;
         
         // 🌟 Utiliza 'wa.me' para despertar la aplicación instalada en Windows en 1 milisegundo
         const urlDirecta = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
