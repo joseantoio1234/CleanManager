@@ -54,7 +54,7 @@ function AppContent() {
       {/* Renderizado Condicional del Navbar según la ruta actual */}
       {isPrivateRoute ? <NavbarPrivate /> : <Navbar />}
 
-      <main className="flex-grow">
+      <main className="grow">
         <Routes>
           {/* ==========================================
               RUTAS PÚBLICAS

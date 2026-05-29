@@ -123,7 +123,7 @@ const Perfil = () => {
       </button>
 
       <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-100/50 border border-white overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-10 text-white flex items-center gap-6">
+        <div className="bg-linear-to-r from-blue-600 to-blue-500 p-10 text-white flex items-center gap-6">
           <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl border border-white/30">
             <FiUser />
           </div>

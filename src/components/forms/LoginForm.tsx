@@ -92,8 +92,8 @@ const Login = () => {
   // ==========================================
   if (isRedirecting) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px] animate-in fade-in duration-300">
-        <div className="w-full max-w-[420px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-955/10 border border-slate-100 flex flex-col items-center space-y-6 text-center">
+      <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-180px)] min-h-125 animate-in fade-in duration-300">
+        <div className="w-full max-w-105 bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-955/10 border border-slate-100 flex flex-col items-center space-y-6 text-center">
           
           {/* Spinner animado con Tailwind */}
           <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
@@ -110,8 +110,8 @@ const Login = () => {
 
   // Vista del formulario normal
   return (
-    <div className="flex items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px]">
-      <div className="w-full max-w-[520px] bg-white px-10 py-8 md:px-14 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-950/10 flex flex-col items-center border border-slate-100 transition-all duration-300">
+    <div className="flex items-center justify-center w-full h-[calc(100vh-180px)] min-h-125">
+      <div className="w-full max-w-130 bg-white px-10 py-8 md:px-14 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-950/10 flex flex-col items-center border border-slate-100 transition-all duration-300">
         
         <div className="text-center">
           <h1 className="text-4xl font-bold text-blue-600 tracking-tight">

@@ -159,7 +159,7 @@ const Servicios = () => {
             {/* Grid de Contenido */}
             <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-5 gap-6">
                 
-                <form onSubmit={handleAddServicio} className="lg:col-span-2 bg-white p-6 rounded-[2rem] shadow-xl shadow-blue-100/40 border border-white h-fit space-y-4">
+                <form onSubmit={handleAddServicio} className="lg:col-span-2 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white h-fit space-y-4">
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                         <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FiPlus size={14}/></span>
                         Nuevo Servicio
@@ -183,7 +183,7 @@ const Servicios = () => {
                             placeholder="Opcional: detalles del tratamiento..." 
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 border-none text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all min-h-[100px] resize-none"
+                            className="w-full px-4 py-3 bg-slate-50 border-none text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all min-h-25 resize-none"
                         />
                     </div>
 
@@ -193,7 +193,7 @@ const Servicios = () => {
                 </form>
 
                 {/* Tabla de Catálogo Activo  */}
-                <div className="lg:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-[520px]">
+                <div className="lg:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-130">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-md font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                             <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FiGrid size={14}/></span>

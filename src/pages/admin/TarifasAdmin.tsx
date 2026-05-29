@@ -174,7 +174,7 @@ const TarifasAdmin = () => {
           </form>
         </div>
 
-        <div className="md:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-[520px]">
+        <div className="md:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-130">
           
           {/* Cabecera interna con Buscador */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
