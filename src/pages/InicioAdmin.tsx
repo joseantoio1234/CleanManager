@@ -10,7 +10,6 @@ import {
 const InicioAdmin = () => {
     const navigate = useNavigate();
 
-    // Recuperamos el nombre real de la empresa guardado en el login
     const nombreTintoreria = localStorage.getItem('nombre_tintoreria') || "Tintorería Jerez"; 
 
     // Configuración modular de las tarjetas exclusivas del Administrador
@@ -19,7 +18,7 @@ const InicioAdmin = () => {
             title: "Informes y Analíticas",
             description: "Evolución de ingresos mensuales, balance de facturación de IVA y estadísticas de prendas top.",
             icon: <FiTrendingUp />,
-            path: "/admin-analiticas", // Pantalla que crearemos a continuación
+            path: "/admin-analiticas", 
             color: "bg-indigo-600 shadow-indigo-100",
             badge: "Estrategia"
         },
@@ -27,7 +26,7 @@ const InicioAdmin = () => {
             title: "Catálogo de Tarifas",
             description: "Administrar el maestro oficial de prendas, actualizar precios base y configurar tratamientos.",
             icon: <FiTag />,
-            path: "/prendas", // Reutilizamos tu tabla de prendas, pero con permisos de edición
+            path: "/prendas", 
             color: "bg-amber-500 shadow-amber-100",
             badge: "Precios"
         },
@@ -35,7 +34,7 @@ const InicioAdmin = () => {
             title: "Auditoría de Pedidos",
             description: "Supervisar el histórico total de encargos, controlar incidencias y estados del taller.",
             icon: <FiClipboard />,
-            path: "/dashboard", // El administrador puede ver el taller desde arriba
+            path: "/dashboard", 
             color: "bg-blue-600 shadow-blue-100",
             badge: "Auditoría"
         },
@@ -75,7 +74,6 @@ const InicioAdmin = () => {
                         onClick={() => navigate(modulo.path)}
                         className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between gap-6 cursor-pointer hover:shadow-xl hover:shadow-indigo-900/5 hover:border-indigo-200/50 transition-all duration-300 active:scale-[0.99] group select-none relative overflow-hidden"
                     >
-                        {/* Contenido Superior de la Card */}
                         <div className="flex gap-5 items-start">
                             <div className={`${modulo.color} p-5 rounded-2xl text-white text-3xl shadow-lg transition-transform group-hover:scale-105 duration-300 shrink-0`}>
                                 {modulo.icon}

@@ -5,10 +5,8 @@ import { authRepository } from '../../database/repositories/auth.repository';
 export const NavbarPrivate = () => {
   const navigate = useNavigate();
   
-  // Extraemos dinámicamente el nombre real de la empresa guardado al registrarse o hacer login
   const userName = localStorage.getItem('nombre_tintoreria') || "Mi Tintorería";
   
-  // 🚀 NUEVO: Recuperamos el rol del usuario logueado para dinamizar la navegación principal
   const rol = localStorage.getItem('rol') || 'empleado';
 
   const handleLogout = async () => {
@@ -24,10 +22,8 @@ export const NavbarPrivate = () => {
   };
 
   return (
-    /* 🚀 NAVBAR PRIVADA ACTUALIZADA: Cambiado bg-white por bg-slate-100 y ajustado el borde inferior a border-slate-200 */
     <nav className="w-full bg-slate-100 border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-50 print:hidden transition-colors">
       
-      {/* Logo Izquierda - 🚀 CORREGIDO: Redirección inteligente según el rol del usuario */}
       <Link 
         to={rol === 'admin' ? '/inicio-admin' : '/inicio'} 
         className="text-2xl font-bold text-blue-600 tracking-tight select-none hover:opacity-90 transition-opacity"
@@ -45,7 +41,6 @@ export const NavbarPrivate = () => {
         
         {/* 2. Contenedor del Avatar y Menú Desplegable */}
         <div className="relative group">
-          {/* Cuadrado con Avatar - Adaptado el color de fondo para hacer juego */}
           <div className="w-10 h-10 bg-blue-50/80 border border-blue-100 rounded-xl flex items-center justify-center text-blue-600 cursor-pointer hover:bg-blue-600 hover:text-white transition-all shadow-sm">
             <FiUser size={18} />
           </div>

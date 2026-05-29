@@ -37,7 +37,6 @@ const DetalleCliente = () => {
         if (nombreCliente) cargarHistorial();
     }, [nombre]);
 
-    // Cálculos rápidos en caliente para las tarjetas resumen del cliente
     const totalPedidos = historial.length;
     const totalInvertido = historial.reduce((sum, item) => sum + Number(item.total), 0);
     const pendientesEntrega = historial.filter(item => item.estado !== 'ENTREGADO').length;
@@ -66,7 +65,6 @@ const DetalleCliente = () => {
                 </div>
             </div>
 
-            {/* Resumen de Métricas de este cliente */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-4xl shadow-sm border border-slate-100 flex items-center gap-4">
                     <div className="bg-blue-500 p-4 rounded-2xl text-white text-2xl"><FiShoppingBag /></div>
@@ -91,7 +89,6 @@ const DetalleCliente = () => {
                 </div>
             </div>
 
-            {/* Tabla Histórica */}
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                 <div className="p-8 border-b border-slate-50">
                     <h2 className="text-lg font-bold text-slate-900">Historial de Pedidos</h2>

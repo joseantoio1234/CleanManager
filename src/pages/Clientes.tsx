@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiSearch, FiUserPlus, FiX, FiUser, FiPhone, FiMail } from 'react-icons/fi';
-import Swal from 'sweetalert2'; // 🚀 Importamos el motor de animaciones estructuradas
+import Swal from 'sweetalert2'; 
 
 interface Cliente {
     id_cliente: number;
@@ -72,7 +72,6 @@ const Clientes = () => {
                 throw new Error(data.message || "Error al registrar cliente");
             }
 
-            // 🌟 ANIMACIÓN DE ÉXITO VISUAL DE ALTA CALIDAD (SweetAlert2)
             Swal.fire({
                 title: '¡Cliente Añadido!',
                 text: `Ficha de ${nombre.trim()} registrada correctamente.`,
@@ -86,10 +85,8 @@ const Clientes = () => {
                 }
             });
 
-            // Forzamos el refresco inmediato de los datos en la tabla de React
             await cargarClientes();
 
-            // Limpiamos los inputs del modal y lo cerramos
             setNombre('');
             setTelefono('');
             setEmail('');
@@ -100,7 +97,6 @@ const Clientes = () => {
         }
     };
 
-    // 🚀 BLINDADO: Evaluamos de forma segura que nombre_completo exista antes de aplicar toLowerCase()
     const clientesFiltrados = listaClientes.filter(c => {
         const nombreValido = c.nombre_completo || '';
         const telefonoValido = c.telefono || '';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiPlus, FiGrid, FiActivity, FiTrash2 } from 'react-icons/fi'; // 🚀 Importamos FiTrash2
+import { FiArrowLeft, FiPlus, FiGrid, FiActivity, FiTrash2 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
 interface ServicioCatalogo {
@@ -16,7 +16,22 @@ const Servicios = () => {
     const [descripcion, setDescripcion] = useState('');
     const [loading, setLoading] = useState(true);
 
-    const idEmpresa = localStorage.getItem('id_empresa') || '1';
+    const obtenerIdEmpresa = (): string => {
+        const sessionStr = localStorage.getItem('usuario_sesion');
+        if (sessionStr) {
+            try {
+                const session = JSON.parse(sessionStr);
+                if (session && session.id_empresa) {
+                    return String(session.id_empresa);
+                }
+            } catch (e) {
+                console.error("Error al leer la sesión activa:", e);
+            }
+        }
+        return localStorage.getItem('id_empresa') || '10'; 
+    };
+
+    const idEmpresa = obtenerIdEmpresa();
 
     const cargarServicios = async () => {
         try {
@@ -45,7 +60,7 @@ const Servicios = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id_empresa: idEmpresa,
+                    id_empresa: parseInt(idEmpresa),
                     nombre_servicio: nombreServicio.trim(),
                     descripcion: descripcion.trim()
                 })
@@ -77,7 +92,6 @@ const Servicios = () => {
         }
     };
 
-    // 🚀 NUEVA FUNCIÓN: Eliminar servicio con doble confirmación nativa SaaS
     const handleEliminarServicio = async (id_servicio: number, nombre: string) => {
         Swal.fire({
           title: '¿Eliminar Tratamiento?',
@@ -95,7 +109,7 @@ const Servicios = () => {
               const response = await fetch(`http://localhost:5000/api/servicios/${id_servicio}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_empresa: idEmpresa }) // Validación extra por aislamiento SaaS
+                body: JSON.stringify({ id_empresa: parseInt(idEmpresa) })
               });
     
               const data = await response.json();
@@ -110,7 +124,7 @@ const Servicios = () => {
                 customClass: { popup: 'rounded-[2rem]' }
               });
     
-              cargarServicios(); // Refrescamos la tabla instantáneamente
+              cargarServicios(); 
             } catch (error: any) {
               Swal.fire({
                 title: 'Error',
@@ -124,29 +138,31 @@ const Servicios = () => {
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-200">
-            {/* Cabecera superior */}
-            <div className="flex justify-between items-center">
+        <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 p-6 flex flex-col items-center animate-in fade-in duration-300">
+            
+            {/*  Cabecera de Módulo */}
+            <div className="w-full max-w-6xl mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-left">
+                <div>
+                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">Configuración de Servicios</h1>
+                    <p className="text-xs text-slate-400 font-medium">Gestiona los tratamientos de lavado y plancha disponibles para el mostrador.</p>
+                </div>
+                
                 <button 
                     onClick={() => navigate('/inicio-admin')}
-                    className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm transition-colors group"
+                    className="flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-600 font-bold text-xs h-10 px-4 rounded-xl border border-slate-200/80 shadow-sm transition-all active:scale-95 shrink-0"
                 >
-                    <FiArrowLeft className="group-hover:-translate-x-1 transition-transform" /> 
-                    Volver al Menú
+                    <FiArrowLeft size={16} className="text-slate-400" />
+                    Volver al menú
                 </button>
             </div>
 
-            <div className="text-left">
-                <h1 className="text-3xl font-black text-slate-900">Configuración de Servicios</h1>
-                <p className="text-slate-400 text-sm">Gestiona los tratamientos de lavado y plancha disponibles para el mostrador.</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Grid de Contenido */}
+            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-5 gap-6">
                 
-                {/* Formulario de Alta */}
-                <form onSubmit={handleAddServicio} className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm space-y-4">
+                <form onSubmit={handleAddServicio} className="lg:col-span-2 bg-white p-6 rounded-[2rem] shadow-xl shadow-blue-100/40 border border-white h-fit space-y-4">
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                        <FiPlus className="text-blue-500" /> Nuevo Servicio
+                        <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FiPlus size={14}/></span>
+                        Nuevo Servicio
                     </h3>
 
                     <div className="space-y-1 text-left">
@@ -157,7 +173,7 @@ const Servicios = () => {
                             placeholder="ej: Limpieza de Cortinas" 
                             value={nombreServicio}
                             onChange={(e) => setNombreServicio(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 text-xs font-semibold rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all"
+                            className="w-full px-4 h-11 bg-slate-50 border-none text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                         />
                     </div>
 
@@ -167,60 +183,58 @@ const Servicios = () => {
                             placeholder="Opcional: detalles del tratamiento..." 
                             value={descripcion}
                             onChange={(e) => setDescripcion(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 text-xs font-semibold rounded-xl outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all min-h-20"
+                            className="w-full px-4 py-3 bg-slate-50 border-none text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all min-h-[100px] resize-none"
                         />
                     </div>
 
-                    <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95">
+                    <button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 mt-2">
                         Añadir al Catálogo
                     </button>
                 </form>
 
-                {/* Tabla de Catálogo Activo */}
-                <div className="lg:col-span-2 bg-white rounded-4xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                            <FiGrid className="text-blue-500" /> Catálogo Activo
+                {/* Tabla de Catálogo Activo  */}
+                <div className="lg:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-[520px]">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-md font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                            <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FiGrid size={14}/></span>
+                            Catálogo Activo
+                            <span className="text-xs bg-slate-100 text-slate-500 font-black px-2 py-0.5 rounded-md">{listaServicios.length}</span>
                         </h3>
-                        <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-xl text-xs font-bold border border-blue-100/50">
-                            {listaServicios.length} Servicios
-                        </span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Tratamiento / Operación</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase">Descripción</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase text-center w-24">Acciones</th> {/* 🚀 Columna de Acciones */}
+                    <div className="w-full flex-1 overflow-y-auto pr-1 border border-slate-50 rounded-xl-----------">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-100 bg-slate-50/50">
+                                    <th className="py-2 px-4 text-[10px] font-bold text-slate-400 uppercase">Tratamiento / Operación</th>
+                                    <th className="py-2 px-4 text-[10px] font-bold text-slate-400 uppercase">Descripción</th>
+                                    <th className="py-2 px-4 text-[10px] font-bold text-slate-400 uppercase text-center w-20">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-8 text-center text-xs text-slate-400 font-medium">Sincronizando operaciones...</td>
+                                        <td colSpan={3} className="text-center py-12 text-xs text-slate-400 font-medium">Sincronizando operaciones...</td>
                                     </tr>
                                 ) : listaServicios.length === 0 ? (
                                     <tr>
-                                        <td colSpan={3} className="px-6 py-12 text-center text-xs text-slate-400 font-medium">No se han registrado servicios en esta sucursal.</td>
+                                        <td colSpan={3} className="text-center py-12 text-xs text-slate-400 font-medium">No se han registrado servicios en esta sucursal.</td>
                                     </tr>
                                 ) : (
                                     listaServicios.map((serv) => (
-                                        <tr key={serv.id_servicio} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4 text-xs font-bold text-slate-800 flex items-center gap-2">
-                                                <FiActivity className="text-blue-400" /> {serv.nombre_servicio}
+                                        <tr key={serv.id_servicio} className="hover:bg-slate-50/40 transition-colors group">
+                                            <td className="py-3 px-4 text-sm font-semibold text-slate-700 text-left flex items-center gap-2">
+                                                <FiActivity className="text-blue-500" size={14} /> {serv.nombre_servicio}
                                             </td>
-                                            <td className="px-6 py-4 text-xs text-slate-500 font-medium">{serv.descripcion || '—'}</td>
-                                            {/* 🚀 Botón de eliminar con papelera */}
-                                            <td className="px-6 py-3 text-center">
+                                            <td className="py-3 px-4 text-xs text-slate-500 font-medium text-left">{serv.descripcion || '—'}</td>
+                                            <td className="py-2 px-4 text-center">
                                                 <button 
                                                     type="button"
                                                     onClick={() => handleEliminarServicio(serv.id_servicio, serv.nombre_servicio)}
-                                                    className="p-2 text-slate-400 hover:text-red-500 rounded-xl bg-slate-50 hover:bg-red-50 transition-colors group"
+                                                    className="p-2 text-slate-400 hover:text-red-500 rounded-xl bg-slate-50 hover:bg-red-50 transition-colors"
                                                     title="Eliminar servicio"
                                                 >
-                                                    <FiTrash2 className="text-sm" />
+                                                    <FiTrash2 size={14} />
                                                 </button>
                                             </td>
                                         </tr>

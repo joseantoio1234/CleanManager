@@ -1,7 +1,4 @@
-// src/utils/regex.ts
-
 export const validateCIF = (cif: string) => {
-  // Un CIF/NIF tiene 9 caracteres (ej: B12345678 o 12345678Z)
   return cif.trim().length === 9;
 };
 

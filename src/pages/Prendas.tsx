@@ -13,7 +13,7 @@ const Pretendas = () => {
     const [prendas, setPrendas] = useState<Prenda[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const ID_EMPRESA = 1; // En el futuro vendrá del localStorage
+    const ID_EMPRESA = 1; 
 
     const cargarPrendas = async () => {
         try {
@@ -61,7 +61,6 @@ const Pretendas = () => {
                     </button>
                 </div>
 
-                {/* Renderizado Condicional */}
                 <div className="overflow-x-auto">
                     {loading ? (
                         <div className="text-center py-20 text-slate-400">
@@ -69,7 +68,6 @@ const Pretendas = () => {
                             Sincronizando catálogo...
                         </div>
                     ) : prendas.length === 0 ? (
-                        /* INTERFAZ VACÍA ELEGANTE */
                         <div className="text-center py-20 px-6 max-w-md mx-auto space-y-4">
                             <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner">
                                 <FiTag />
@@ -86,7 +84,6 @@ const Pretendas = () => {
                             </button>
                         </div>
                     ) : (
-                        /* TABLA CON DATOS */
                         <table className="w-full text-left">
                             <thead className="bg-slate-50">
                                 <tr>

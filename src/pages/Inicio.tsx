@@ -10,10 +10,8 @@ import {
 const Inicio = () => {
     const navigate = useNavigate();
 
-    // Recuperamos dinámicamente el nombre guardado durante el Login (fallback por si acaso)
     const nombreTintoreria = localStorage.getItem('nombre_tintoreria') || "Tintorería Jerez"; 
-
-    // Configuración modular de las tarjetas del menú principal adaptadas al empleado
+3
     const modulos = [
         {
             title: "Panel de Control",
@@ -92,7 +90,6 @@ const Inicio = () => {
                             </div>
                         </div>
 
-                        {/* Detalle Inferior / Badge */}
                         <div className="flex justify-between items-center border-t border-slate-50 pt-4 mt-2">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                 {modulo.badge}

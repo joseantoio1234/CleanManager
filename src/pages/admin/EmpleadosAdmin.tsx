@@ -25,7 +25,7 @@ const EmpleadosAdmin = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(''); // Solo requerida en altas
+  const [password, setPassword] = useState(''); 
 
   // 1. Cargar la plantilla de empleados desde MySQL
   const cargarEmpleados = async () => {
@@ -44,7 +44,7 @@ const EmpleadosAdmin = () => {
     cargarEmpleados();
   }, []);
 
-  // 2. Manejar el envío del formulario (Alta o Modificación)
+  // 2. Manejar el envío del formulario 
   const handleGuardarEmpleado = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -76,7 +76,7 @@ const EmpleadosAdmin = () => {
           id_empresa: parseInt(idEmpresa),
           username: username.trim(),
           email: email.trim() || null,
-          password: password || undefined // Si estamos editando y va vacía, el backend no la toca
+          password: password || undefined 
         })
       });
 
@@ -87,7 +87,6 @@ const EmpleadosAdmin = () => {
         limpiarFormulario();
         cargarEmpleados();
 
-        // ⏱️ El mensaje desaparece automáticamente a los 3 segundos
         setTimeout(() => {
           setSuccessMsg('');
         }, 3000);
@@ -107,7 +106,7 @@ const EmpleadosAdmin = () => {
     setSelectedId(emp.id_usuario);
     setUsername(emp.username);
     setEmail(emp.email || '');
-    setPassword(''); // La contraseña se deja en blanco por privacidad
+    setPassword(''); 
     setErrorMsg('');
   };
 
@@ -138,10 +137,9 @@ const EmpleadosAdmin = () => {
         </button>
       </div>
 
-      {/* GRID PANORÁMICO */}
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-5 gap-6">
         
-        {/* COLUMNA IZQUIERDA: Formulario dinámico (Alta / Modificación) */}
+        {/* COLUMNA IZQUIERDA: Formulario dinámico */}
         <div className="md:col-span-2 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white h-fit">
           <h2 className="text-md font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
             <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">

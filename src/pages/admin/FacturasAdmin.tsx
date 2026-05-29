@@ -21,7 +21,6 @@ const FacturasAdmin = () => {
   const [facturas, setFacturas] = useState<FacturaFiscal[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados acumulativos para los paneles de arriba
   const [totales, setTotales] = useState({ base: 0, iva: 0, total: 0 });
 
   const cargarHistorialFiscal = async () => {
@@ -32,7 +31,6 @@ const FacturasAdmin = () => {
         const data = await response.json();
         setFacturas(data);
 
-        // Calcular los acumulados fiscales sobre la marcha
         const acumulado = data.reduce(
           (acc: any, curr: FacturaFiscal) => {
             acc.base += Number(curr.base_imponible);
@@ -58,7 +56,7 @@ const FacturasAdmin = () => {
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
       
-      {/* Botón superior Volver al menú (Cápsula elegante) */}
+      {/* Botón superior Volver al menú */}
       <div className="w-full max-w-6xl flex justify-end mb-2">
         <button 
           onClick={() => navigate('/inicio-admin')} 

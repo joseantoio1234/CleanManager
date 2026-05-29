@@ -2,14 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiDollarSign, FiSearch, FiMail, FiMessageCircle, FiTrendingUp } from 'react-icons/fi';
 
-// Importaciones necesarias de Chart.js y el componente adaptador de React
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
-// Registramos los elementos esenciales en el núcleo de Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Interfaz ampliada para admitir los datos dinámicos que inyectamos en MySQL
 interface PedidoListo {
     id_pedido: number;
     cliente: string;
@@ -27,7 +24,6 @@ const Cobros = () => {
     const [statsCaja, setStatsCaja] = useState({ EFECTIVO: 0, TARJETA: 0, BIZUM: 0 });
     const [loading, setLoading] = useState(true);
 
-    // Extraemos el id_empresa real de la sesión activa
     const idEmpresaActive = localStorage.getItem('id_empresa') || '1';
 
     const cargarCaja = async () => {
@@ -49,11 +45,9 @@ const Cobros = () => {
         cargarCaja();
     }, [idEmpresaActive]);
 
-    // 🚀 DISPARO DIRECTO: Abre WhatsApp Nativo al instante sin confirmaciones visuales intermedias
     const enviarNotificacionWhatsApp = (order: PedidoListo) => {
-        if (!order.telefono) return; // Validación silenciosa instantánea
+        if (!order.telefono) return; 
 
-        // Limpiamos espacios, guiones y forzamos el prefijo de España (34)
         let telefonoLimpio = order.telefono.replace(/[^0-9]/g, '');
         if (!telefonoLimpio.startsWith('34') && telefonoLimpio.length === 9) {
             telefonoLimpio = '34' + telefonoLimpio;
@@ -61,20 +55,17 @@ const Cobros = () => {
 
         const mensaje = `Hola ${order.cliente},\n\nTe informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está completamente listo para retirar en el mostrador principal.\n\nDetalles del ticket:\n- Importe total: ${Number(order.total).toFixed(2)}€\n\n\nLe informamos que en el caso de que no se recoja la prenda en una franja de tiemo de 2 meses tras emitirse este mensaje, se hara una autorecarga de un 15% del precio total y a los 4 meses se dara dado como abandono de prenda.\n¡Muchas gracias por tu confianza!\nUn saludo del equipo de Tintorería Fregenal.`;
         
-        // 🌟 Utiliza 'wa.me' para despertar la aplicación instalada en Windows en 1 milisegundo
         const urlDirecta = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
         
         window.open(urlDirecta, '_blank');
     };
 
-    // 🚀 DISPARO DIRECTO: Inyecta los datos en el gestor de correo predeterminado al instante
     const enviarNotificacionEmail = (order: PedidoListo) => {
-        if (!order.email) return; // Validación silenciosa instantánea
+        if (!order.email) return; 
 
         const asunto = `Tu ropa ya está lista para retirar ✨`;
         const cuerpo = `Hola ${order.cliente},\n\nTe informamos desde Tintorería Fregenal que tu pedido de ${order.prenda} (${order.servicio}) ya está completamente listo para retirar en el mostrador principal.\n\nDetalles del ticket:\n- Importe total: ${Number(order.total).toFixed(2)}€\n\n\nLe informamos que en el caso de que no se recoja la prenda en una franja de tiemo de 2 meses tras emitirse este mensaje, se hara una autorecarga de un 15% del precio total y a los 4 meses se dara dado como abandono de prenda.\n¡Muchas gracias por tu confianza!\nUn saludo del equipo de Tintorería Fregenal.`;
         
-        // Abre el software local de correos inmediatamente relleno
         window.location.href = `mailto:${order.email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
     };
 
@@ -151,7 +142,6 @@ const Cobros = () => {
 
             {/* SECCIÓN SUPERIOR: Resumen de Caja y Gráfico */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Métricas rápidas */}
                 <div className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="p-3.5 bg-indigo-500 text-white rounded-2xl text-xl shadow-lg shadow-indigo-100">
@@ -178,7 +168,7 @@ const Cobros = () => {
                     </div>
                 </div>
 
-                {/* GRÁFICO CIRCULAR INTERACTIVO (DÓNUT) */}
+                {/* GRÁFICO CIRCULAR INTERACTIVO */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-4xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-55">
                     <div className="mb-2">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Distribución de Ingresos</h3>

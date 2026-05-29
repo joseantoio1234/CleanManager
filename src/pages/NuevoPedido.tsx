@@ -125,7 +125,6 @@ const NuevoPedido = () => {
       const idEmpresaLogueada = parseInt(localStorage.getItem('id_empresa') || '1');
       const totalFormateado = formData.total.replace(',', '.');
 
-      // Pasamos el payload extendido limpio al repositorio
       await authRepository.createOrder({
         id_empresa: idEmpresaLogueada,
         prenda: formData.prenda,
@@ -295,7 +294,6 @@ const NuevoPedido = () => {
             </div>
           </div>
 
-          {/* Observaciones a ancho completo */}
           <div className="md:col-span-2 space-y-2">
             <h2 className="flex items-center gap-2 font-bold text-slate-800 border-b pb-2">
               <FiInfo className="text-blue-500" /> Observaciones y Manchas

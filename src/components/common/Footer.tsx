@@ -4,7 +4,6 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    /* 🚀 FOOTER ACTUALIZADO: Cambiado bg-white por bg-slate-100 e igualado el borde superior a border-slate-200 */
     <footer className="bg-slate-100 border-t border-slate-200 pt-16 pb-8 px-10 transition-colors">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
         
@@ -51,7 +50,6 @@ export const Footer = () => {
       </div>
 
       {/* Barra Inferior de Copyright */}
-      {/* 🚀 Ajustado el borde interno también a border-slate-200/60 para que no desentone */}
       <div className="max-w-6xl mx-auto pt-8 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
         <p>© {currentYear} CleanManager. Todos los derechos reservados.</p>
         <div className="flex gap-6">

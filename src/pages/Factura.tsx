@@ -48,20 +48,18 @@ const Factura = () => {
         fetchFactura();
     }, [id_pedido]);
 
-    // Nueva función para guardar de forma definitiva la factura en la BD desde esta vista
     const handleGuardarFactura = async () => {
         try {
             setSaving(true);
             const response = await fetch(`http://localhost:5000/api/orders/${id_pedido}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: 'ENTREGADO' }), // Esto dispara la facturación en tu backend
+                body: JSON.stringify({ estado: 'ENTREGADO' }), 
             });
 
             if (!response.ok) throw new Error("Error al procesar el cierre fiscal.");
             
             alert("¡Factura generada y guardada con éxito en la base de datos!");
-            // Recargamos los datos para actualizar el número correlativo oficial y los badges
             await fetchFactura();
         } catch (error) {
             console.error(error);
@@ -86,12 +84,11 @@ const Factura = () => {
     const importeIva = factura.importe_iva !== null ? Number(factura.importe_iva) : (totalFactura - baseImponible);
     const fechaDocumento = factura.fecha_factura ? factura.fecha_factura : factura.fecha_pedido;
 
-    // Condición para saber si sigue siendo un borrador de taller o ya es una venta cerrada
     const esBorrador = factura.estado !== 'ENTREGADO';
 
     return (
         <div className="w-full max-w-2xl mx-auto p-6 space-y-6">
-            {/* Cabecera de control (Se ocultará automáticamente en la impresión) */}
+            {/* Cabecera de control  */}
             <div className="flex items-center justify-between print:hidden">
                 <button 
                     onClick={() => navigate('/dashboard')}
@@ -102,7 +99,6 @@ const Factura = () => {
                 </button>
                 
                 <div className="flex items-center gap-3">
-                    {/* NUEVO BOTÓN: Guardar en la base de datos (Solo visible en borradores) */}
                     {esBorrador && (
                         <button
                             onClick={handleGuardarFactura}
@@ -125,7 +121,6 @@ const Factura = () => {
             {/* CUERPO DEL TICKET / FACTURA */}
             <div className="bg-white rounded-4xl shadow-xl shadow-slate-100 p-8 border border-slate-100 font-mono text-slate-800 relative overflow-hidden print:shadow-none print:border-none print:p-0">
                 
-                {/* Decoración de validez */}
                 <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border print:hidden ${
                     esBorrador 
                     ? 'bg-amber-50 text-amber-700 border-amber-200' 
@@ -162,7 +157,6 @@ const Factura = () => {
                     </div>
                 </div>
 
-                {/* Conceptos / Líneas de Detalle */}
                 <div className="py-6 border-b border-dashed space-y-4">
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <span>Descripción Servicio</span>
@@ -195,7 +189,6 @@ const Factura = () => {
                     <span className="text-2xl font-black text-blue-600">{totalFactura.toFixed(2)}€</span>
                 </div>
 
-                {/* Pie Legal */}
                 <div className="text-center pt-8 text-[10px] text-slate-400 space-y-1">
                     <p className="font-bold">¡Gracias por su confianza!</p>
                     <p>Factura simplificada emitida según el RD 1619/2012.</p>

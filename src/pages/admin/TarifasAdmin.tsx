@@ -21,7 +21,22 @@ const TarifasAdmin = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const idEmpresa = localStorage.getItem('id_empresa') || '1';
+  const obtenerIdEmpresa = (): string => {
+    const sessionStr = localStorage.getItem('usuario_sesion');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        if (session && session.id_empresa) {
+          return String(session.id_empresa);
+        }
+      } catch (e) {
+        console.error("Error al leer la sesión activa:", e);
+      }
+    }
+    return localStorage.getItem('id_empresa') || '10'; 
+  };
+
+  const idEmpresa = obtenerIdEmpresa();
 
   // 1. Cargar el catálogo de prendas actual desde tu base de datos MySQL
   const cargarPrendas = async () => {
@@ -38,9 +53,9 @@ const TarifasAdmin = () => {
 
   useEffect(() => {
     cargarPrendas();
-  }, []);
+  }, [idEmpresa]);
 
-  // 2. Manejar el alta de una nueva prenda (Envío POST al backend con temporizador)
+  // 2. Manejar el alta de una nueva prenda 
   const handleGuardarPrenda = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -75,9 +90,8 @@ const TarifasAdmin = () => {
         setSuccessMsg(`¡Prenda "${nombrePrenda}" añadida con éxito!`);
         setNombrePrenda('');
         setPrecioBase('');
-        cargarPrendas(); // Recargamos la tabla automáticamente llamando a MySQL de nuevo
+        cargarPrendas(); 
 
-        // ⏱️ Desaparece el mensaje automáticamente a los 3 segundos (3000ms)
         setTimeout(() => {
           setSuccessMsg('');
         }, 3000);
@@ -92,15 +106,13 @@ const TarifasAdmin = () => {
     }
   };
 
-  // Filtrado reactivo en tiempo real para el buscador superior
   const prendasFiltradas = prendas.filter(prenda =>
-    prenda.nombre_prenda.toLowerCase().includes(busqueda.toLowerCase())
+    prenda.nombre_prenda?.toLowerCase().includes(busqueda.toLowerCase())
   );
 
   return (
     <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 p-6 flex flex-col items-center animate-in fade-in duration-300">
       
-      {/* Encabezado del Módulo con Botón de Retorno Incorporado */}
       <div className="w-full max-w-6xl mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-left">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">Configuración de Tarifas</h1>
@@ -116,11 +128,9 @@ const TarifasAdmin = () => {
         </button>
       </div>
 
-      {/* Grid Panorámico de dos columnas (Formulario + Tabla) */}
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-5 gap-6">
         
-        {/* COLUMNA IZQUIERDA: Formulario de Alta (2/5 del ancho total) */}
-        <div className="md:col-span-2 bg-white p-6 rounded-[2rem] shadow-xl shadow-blue-100/40 border border-white h-fit">
+        <div className="md:col-span-2 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white h-fit">
           <h2 className="text-md font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
             <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FiTag size={14}/></span>
             Nueva Prenda
@@ -128,7 +138,6 @@ const TarifasAdmin = () => {
 
           {errorMsg && <div className="p-3 bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-xl mb-3 text-center">{errorMsg}</div>}
           
-          {/* Mensaje estático y limpio sin rebotes molestos */}
           {successMsg && <div className="p-3 bg-green-50 border border-green-100 text-green-600 text-xs font-bold rounded-xl mb-3 text-center">{successMsg}</div>}
 
           <form onSubmit={handleGuardarPrenda} className="space-y-4">
@@ -165,8 +174,7 @@ const TarifasAdmin = () => {
           </form>
         </div>
 
-        {/* COLUMNA DERECHA: Tabla con la Rejilla de MySQL (3/5 del ancho total) */}
-        <div className="md:col-span-3 bg-white p-6 rounded-[2rem] shadow-xl shadow-blue-100/40 border border-white flex flex-col h-[520px]">
+        <div className="md:col-span-3 bg-white p-6 rounded-4xl shadow-xl shadow-blue-100/40 border border-white flex flex-col h-[520px]">
           
           {/* Cabecera interna con Buscador */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -175,7 +183,7 @@ const TarifasAdmin = () => {
               <span className="text-xs bg-slate-100 text-slate-500 font-black px-2 py-0.5 rounded-md">{prendas.length}</span>
             </h2>
             
-            <div className="relative flex items-center max-w-[240px] w-full">
+            <div className="relative flex items-center max-w-60 w-full">
               <span className="absolute left-3 text-slate-400"><FiSearch size={14}/></span>
               <Input 
                 type="text"

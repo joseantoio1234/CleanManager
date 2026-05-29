@@ -6,7 +6,7 @@ import { Input } from "../ui/input";
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
-  const [username, setUsername] = useState(''); // Cambiado de email a username
+  const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,12 +42,11 @@ const Login = () => {
           if (session.rol === 'admin') {
             navigate('/inicio-admin');
           } else {
-            navigate('/inicio'); // Tu ruta principal de empleado
+            navigate('/inicio'); 
           }
         }, 1000);
 
       } else {
-        // Fallback de seguridad por si la respuesta viene vacía
         localStorage.setItem('id_empresa', '1');
         localStorage.setItem('nombre_tintoreria', 'Tintorería Jerez');
         localStorage.setItem('user_role', 'empleado');
@@ -58,7 +57,6 @@ const Login = () => {
     } catch (error: any) {
       console.error("Error en login MySQL:", error);
       
-      // --- BYPASS DE RED EN DESARROLLO (Si el servidor Express está apagado) ---
       if (error.message?.includes('fetch') || error.name === 'TypeError' || error.message?.includes('NXDOMAIN')) {
         console.warn("Servidor inaccesible. Aplicando bypass local de desarrollo...");
         
@@ -95,7 +93,6 @@ const Login = () => {
   if (isRedirecting) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px] animate-in fade-in duration-300">
-        {/* 🚀 RELIEVE EXTRA APLICADO TAMBIÉN A LA PANTALLA DE CARGA */}
         <div className="w-full max-w-[420px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-955/10 border border-slate-100 flex flex-col items-center space-y-6 text-center">
           
           {/* Spinner animado con Tailwind */}
@@ -114,7 +111,6 @@ const Login = () => {
   // Vista del formulario normal
   return (
     <div className="flex items-center justify-center w-full h-[calc(100vh-180px)] min-h-[500px]">
-      {/* 🚀 REPARADO: Añadido contorno 'border-slate-100' y potenciada la sombra para dar profundidad 3D real */}
       <div className="w-full max-w-[520px] bg-white px-10 py-8 md:px-14 md:py-10 rounded-[2.5rem] shadow-2xl shadow-blue-950/10 flex flex-col items-center border border-slate-100 transition-all duration-300">
         
         <div className="text-center">

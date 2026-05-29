@@ -27,12 +27,10 @@ const InicioAdmin = () => {
         </p>
       </div>
 
-      {/* SECCIÓN DE NAVEGACIÓN MÓDULOS DE ADMINISTRADOR */}
       <div className="w-full max-w-7xl text-left mb-5">
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Módulos de Control</h2>
       </div>
 
-      {/* REJILLA DE CARDS AMPLIADAS 🚀 */}
       <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* 1. Enlace: Catálogo de Tarifas */}

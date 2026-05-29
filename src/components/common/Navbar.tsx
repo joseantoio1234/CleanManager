@@ -3,16 +3,15 @@ import { Button } from '../ui/button';
 
 export const Navbar = () => {
   return (
-    /* 🚀 NAVBAR ACTUALIZADA: Cambiado bg-white/90 por bg-slate-100 y ajustado el borde para resaltar más */
     <nav className="flex items-center justify-between px-10 py-3 bg-slate-100 sticky top-0 z-50 border-b border-slate-200 shadow-sm transition-colors">
 
-      {/* Logo: text-xl para ajustarse a la barra más pequeña */}
+      {/* Logo */}
       <Link to="/" className="text-xl font-bold text-blue-600 tracking-tight">
         CleanManager
       </Link>
 
       <div className="flex items-center space-x-8">
-        {/* Enlaces de navegación: texto un poco más pequeño para elegancia */}
+        {/* Enlaces de navegación*/}
         <div className="hidden md:flex space-x-6 text-sm font-medium text-slate-500">
           <a href="#features" className="hover:text-blue-600 transition-colors">Características</a>
           <a href="#about" className="hover:text-blue-600 transition-colors">Sobre el proyecto</a>

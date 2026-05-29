@@ -12,7 +12,7 @@ import Inicio from '../pages/Inicio';
 import Cobros from '../pages/Cobros'; 
 
 // ==========================================
-// 👑 IMPORTACIONES DE LA CARPETA ADMIN
+//  IMPORTACIONES DE LA CARPETA ADMIN
 // ==========================================
 import InicioAdmin from '../pages/admin/InicioAdmin';
 import TarifasAdmin from '../pages/admin/TarifasAdmin';
@@ -25,7 +25,7 @@ import { NavbarPrivate } from '../components/common/NavbarPrivate';
 import { Footer } from '../components/common/Footer';
 
 import '../styles/index.css';
-import Servicios from '../pages/Servicios'; // 🚀 Importación Perfecta
+import Servicios from '../pages/Servicios'; 
 
 function AppContent() {
   const location = useLocation();
@@ -43,7 +43,7 @@ function AppContent() {
     '/admin-clientes',
     '/admin-facturas', 
     '/cobros',
-    '/servicios' // 🚀 Mantiene el Navbar privado en esta pantalla
+    '/servicios' 
   ].includes(location.pathname) ||
     location.pathname.startsWith('/clientes/detalle/') ||
     location.pathname.startsWith('/factura/');
@@ -125,7 +125,7 @@ function AppContent() {
           } />
 
           {/* ==========================================
-              👑 ENRUTADO DE MÓDULOS ADMINISTRATIVOS
+               ENRUTADO DE MÓDULOS ADMINISTRATIVOS
              ========================================== */}
           <Route path="/inicio-admin" element={
             <div className="py-10">
@@ -157,14 +157,12 @@ function AppContent() {
             </div>
           } />
 
-          {/* Estructura unificada con espaciado py-10 para el módulo de servicios */}
           <Route path="/servicios" element={
             <div className="py-10">
               <Servicios />
             </div>
           } />
 
-          {/* Redirección por defecto para rutas inexistentes */}
           <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>
@@ -176,12 +174,12 @@ function AppContent() {
 }
 
 // ==========================================
-// 🚀 PUNTO DE ENTRADA REPARADO SIN ENRUTADO RECURSIVO
+//  PUNTO DE ENTRADA 
 // ==========================================
 function App() {
   return (
     <Router>
-      <AppContent /> {/* Cambiado de <App /> a <AppContent /> para disolver el bloqueo */}
+      <AppContent /> 
     </Router>
   );
 }

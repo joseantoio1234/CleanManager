@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 const Landing = () => {
   return (
     <div className="min-h-screen bg-white">
-      {/* Se ha eliminado el <Navbar /> de aquí para evitar el duplicado */}
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 flex flex-col items-center text-center bg-linear-to-b from-blue-50 to-white px-4">
@@ -50,7 +49,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto bg-blue-600 rounded-[3rem] p-12 md:p-20 text-center text-white shadow-2xl shadow-blue-300 overflow-hidden relative">
           <div className="relative z-10">
@@ -62,7 +60,6 @@ const Landing = () => {
               </Button>
             </Link>
           </div>
-          {/* Decoración abstracta */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full -mr-20 -mt-20 opacity-50"></div>
         </div>
       </section>

@@ -121,7 +121,7 @@ const Register = () => {
   if (isRedirecting) {
     return (
       <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-50 animate-in fade-in duration-300">
-        <div className="w-full max-w-[440px] bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/30 border border-white flex flex-col items-center space-y-6 text-center">
+        <div className="w-full max-w-110 bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-blue-200/30 border border-white flex flex-col items-center space-y-6 text-center">
           <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
           <div className="space-y-1.5">
             <h2 className="text-xl font-black text-slate-800">Creando tu cuenta</h2>
@@ -135,19 +135,16 @@ const Register = () => {
   }
 
   return (
-    // Ajustado padding vertical (pt-2 md:pt-4) para empujar la tarjeta hacia arriba
     <div className="flex items-start justify-center w-full min-h-screen pt-2 md:pt-4 bg-slate-50 overflow-y-auto pb-6">
       
-      {/* CAMBIADO: max-w-[700px] -> max-w-5xl (Aumenta el ancho horizontal drásticamente) */}
       <div className="w-full max-w-5xl bg-white px-8 py-6 md:px-12 md:py-8 rounded-[2.5rem] shadow-2xl shadow-blue-200/40 flex flex-col border border-white">
         
-        {/* Cabecera compactada */}
+        {/* Cabecera */}
         <div className="text-center mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-blue-600 tracking-tight">CleanManager</h1>
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">Registro de Nueva Empresa</p>
         </div>
 
-        {/* Formulario con gaps verticales reducidos (gap-y-2) para evitar scroll */}
         <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-6 gap-x-6 gap-y-2 text-left">
           
           <div className="md:col-span-6 space-y-0.5">
@@ -234,7 +231,7 @@ const Register = () => {
             <ErrorMsg name="provincia" />
           </div>
 
-          {/* Bloque de accesos optimizado y unificado en rejilla de 3 columnas para ahorrar espacio */}
+          {/* Bloque de accesos optimizado */}
           <div className="md:col-span-6 border-t border-slate-100 pt-4 mt-1">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               

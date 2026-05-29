@@ -59,7 +59,6 @@ const Dashboard = () => {
         }
     };
 
-    // Modificamos para enviar opcionalmente el estado y el método de pago
     const handleStatusChange = async (id_pedido: number, nuevoEstado: string, metodoPago?: string) => {
         try {
             const bodyPayload: any = { estado: nuevoEstado };
@@ -188,13 +187,11 @@ const Dashboard = () => {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50">
                             <tr>
-                                {/* 🚀 ID ELIMINADO SEGÚN DISEÑO */}
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Cliente</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Prenda</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Servicio</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase">Estado de Prenda</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-right">Total</th>
-                                {/* 🚀 NUEVA COLUMNA INYECTADA DE FORMA ELEGANTE */}
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-center">Método de Pago</th>
                                 <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase text-center">Acciones</th>
                             </tr>
@@ -230,7 +227,7 @@ const Dashboard = () => {
                                             <td className="px-8 py-3">
                                                 <select
                                                     value={order.estado}
-                                                    disabled={estaEntregado} // Bloqueado si ya se cobró y entregó
+                                                    disabled={estaEntregado} 
                                                     onChange={(e) => handleStatusChange(order.id_pedido, e.target.value)}
                                                     className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border outline-none cursor-pointer transition-all ${getStatusStyles(order.estado)} ${estaEntregado ? 'cursor-not-allowed opacity-90' : ''}`}
                                                 >
@@ -246,7 +243,7 @@ const Dashboard = () => {
                                                 {Number(order.total || 0).toFixed(2)}€
                                             </td>
 
-                                            {/* 🚀 NUEVO SELECTOR MULTI-MÉTODO DE PAGO */}
+                                            {/*  SELECTOR MULTI-MÉTODO DE PAGO */}
                                             <td className="px-8 py-3 text-center">
                                                 {estaEntregado ? (
                                                     <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-xl text-[9px] font-black uppercase border border-slate-200/50">
@@ -257,7 +254,7 @@ const Dashboard = () => {
                                                         defaultValue=""
                                                         onChange={(e) => {
                                                             if (!e.target.value) return;
-                                                            // Al seleccionar un método, pasamos el pedido a ENTREGADO con el método elegido
+                                                           
                                                             handleStatusChange(order.id_pedido, 'ENTREGADO', e.target.value);
                                                         }}
                                                         className="px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase bg-white border border-slate-200 text-slate-600 outline-none cursor-pointer hover:border-blue-300 transition-all text-center"
@@ -270,7 +267,7 @@ const Dashboard = () => {
                                                 )}
                                             </td>
                                             
-                                            {/* Columna Acciones / Ticket */}
+                                            {/* Columna Ticket */}
                                             <td className="px-8 py-3 text-center">
                                                 <button
                                                     disabled={!puedeFacturar}
@@ -294,7 +291,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Modal Emergente */}
+            {/* Modal */}
             {activeModal && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
                     <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">

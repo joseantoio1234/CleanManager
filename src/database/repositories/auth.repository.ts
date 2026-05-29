@@ -1,9 +1,6 @@
-// src/database/auth.repository.ts
-
-// Esta es la URL de tu servidor Node.js local con MySQL
 const API_URL = 'http://localhost:5000/api';
 
-// 🚀 INTERFAZ ACTUALIZADA: Añadidos teléfono y email con tipado flexible
+
 interface OrderData {
   id_empresa: number;
   prenda: string;
@@ -11,8 +8,8 @@ interface OrderData {
   servicio: string;
   estado: string; 
   total: number;
-  telefono?: string | null; // 🌟 Reconocido de forma oficial
-  email?: string | null;    // 🌟 Reconocido de forma oficial
+  telefono?: string | null; 
+  email?: string | null;    
 }
 
 export const authRepository = {
@@ -32,9 +29,9 @@ export const authRepository = {
           codigo_postal: companyData.codigo_postal,
           municipio: companyData.municipio,
           provincia: companyData.provincia,
-          email: companyData.email, // El correo de contacto corporativo de la empresa
-          username: username,       // El alias corto para el login del dueño
-          password: password        // Se enviará seguro para encriptarse con bcrypt en el servidor
+          email: companyData.email, 
+          username: username,       
+          password: password        
         }),
       });
 
@@ -51,7 +48,7 @@ export const authRepository = {
     }
   },
 
-  // Inicio de sesión cruzado e inteligente (Mapeado para la tabla 'usuario')
+  // Inicio de sesión 
   signIn: async (username: string, password: string) => {
     try {
       const response = await fetch(`${API_URL}/login`, {
@@ -79,7 +76,6 @@ export const authRepository = {
   // Cierre de sesión de la aplicación
   signOut: async () => {
     try {
-      // Al trabajar con sesiones locales de momento, limpiamos el entorno
       console.log("Sesión cerrada localmente en MySQL");
       return { success: true };
     } catch (error) {
