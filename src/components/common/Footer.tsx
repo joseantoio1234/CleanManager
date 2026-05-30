@@ -53,7 +53,7 @@ export const Footer = () => {
       <div className="max-w-6xl mx-auto pt-8 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
         <p>© {currentYear} CleanManager. Todos los derechos reservados.</p>
         <div className="flex gap-6">
-          <span>React + Tailwind + Supabase</span>
+          <span>React + Tailwind + Mysql Workbench</span>
         </div>
       </div>
     </footer>
