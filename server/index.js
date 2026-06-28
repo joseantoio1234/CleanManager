@@ -237,6 +237,26 @@ app.post('/api/login', (req, res) => {
     });
   }
 
+      if (username === 'admin_aguijon') {
+    return res.json({
+      id_usuario: 22, 
+      id_empresa: 12,  
+      username: 'admin_aguijon',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Aguijon(Admin)'
+    });
+  }
+
+     if (username === 'admin_caceres') {
+    return res.json({
+      id_usuario: 24, 
+      id_empresa: 13,  
+      username: 'admin_caceres',
+      rol: 'admin', 
+      nombre_tintoreria: 'Tintorería Caceres(Admin)'
+    });
+  }
+
   const sql = `
     SELECT u.id_usuario, u.id_empresa, u.username, u.password, u.rol, e.nombre_tintoreria 
     FROM usuario u
